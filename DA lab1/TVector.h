@@ -3,11 +3,11 @@
 
 #include <iostream>
 #include <stdio.h>
-namespace N_Vector {
+namespace NVector {
 
 
     template<class T>
-    class T_Vector {
+    class TVector {
     private:
         unsigned int size;
         unsigned int capacity;
@@ -22,27 +22,36 @@ namespace N_Vector {
     public:
 
 
-        T_Vector() : size(0), capacity(1) {
-            std::cout << "T_Vector was created" << std::endl;
+        TVector() : size(0), capacity(1) {
+            std::cout << "TVector was created" << std::endl;
         };
 
-        T_Vector(const unsigned int n) : T_Vector() {
+        TVector(const unsigned int n) : TVector() {
             size = n;
             capacity = n;
+            data = nullptr;
         };
 
-        T_Vector(const unsigned int n, T elem): T_Vector(){
+        TVector(const unsigned int n, T elem): TVector(){
             size = n;
             capacity = n;
+            data = new T[capacity];
             Assign(elem);
         }
 
-        unsigned int Get_size(){
+        unsigned int GetSize(){
             return size;
         }
 
-        void Push_back(const T elem){
-            if(capacity <= size){
+        void PushBack(const T &elem){
+            if(capacity == 1){
+                capacity *= 2;
+                data = new T[1];
+                data[size] = elem;
+                size++;
+            }
+
+            else if(capacity <= size){
                 capacity *= 2;
                 T* newData = new T[capacity];
                 for (int i = 0; i < size; ++i) {
@@ -72,7 +81,7 @@ namespace N_Vector {
             return data[iterator];
         }
 
-        ~T_Vector(){
+        ~TVector(){
             delete [] data;
         }
     };
