@@ -19,7 +19,7 @@ void CountingSort(NVector::TVector<TPair> & data, const unsigned int & size){
     NVector::TVector<int> count(9);
     for (int i = 0; i < 6; ++i) {
         for (int j = 0; j < size; ++j) {
-            count[data[j].key[i]];
+            count[data[j].key[i]];// TODO начинать надо с младшего разряда
         }
     }
 
