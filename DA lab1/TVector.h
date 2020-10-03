@@ -13,26 +13,27 @@ namespace NVector {
         unsigned int capacity;
         T *data;
 
+
+
+    public:
+
         void Assign(const T elem){
             for (unsigned int i = 0; i < size; ++i){
                 data[i] = elem;
             }
         }
 
-    public:
-
-
         TVector() : size(0), capacity(1) {
-            std::cout << "TVector was created" << std::endl;
+            //std::cout << "TVector was created" << std::endl;
         };
 
-        TVector(const unsigned int n) : TVector() {
+        TVector(const unsigned int n) /*: TVector()*/ {
             size = n;
             capacity = n;
-            data = nullptr;
+            data = new T[capacity];
         };
 
-        TVector(const unsigned int n, T elem): TVector(){
+        TVector(const unsigned int n, T elem)/*: TVector()*/{
             size = n;
             capacity = n;
             data = new T[capacity];
@@ -46,7 +47,7 @@ namespace NVector {
         void PushBack(const T &elem){
             if(capacity == 1){
                 capacity *= 2;
-                data = new T[1];
+                data = new T[capacity];
                 data[size] = elem;
                 size++;
             }
@@ -75,7 +76,7 @@ namespace NVector {
 
         T &operator[](const unsigned int &iterator){
             if(iterator >= size) {
-                std::cout << "CAUTION: size was reached" << std::endl;
+                std::cout << "CAUTION: size was reached\niterator is " << iterator << std::endl;
                 return data[size - 1];
             }
             return data[iterator];

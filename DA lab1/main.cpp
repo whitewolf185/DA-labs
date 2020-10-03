@@ -1,7 +1,8 @@
 #include "TVector.h"
 #include<string>
 
-#define DEBUG
+//#define DEBUG
+#define TEST_ENTER
 
 const short MAXKEY = 10;
 
@@ -21,6 +22,7 @@ void CountingSort(NVector::TVector<TPair> & data, const unsigned int & size){
     NVector::TVector<int> count(MAXKEY);
     NVector::TVector<TPair> result(size);
     for (int i = 0; i < 6; ++i) {
+        count.Assign(0);
         for (int j = 0; j < size; ++j) {
             count[data[j].key[5-i]]++;
         }
@@ -29,11 +31,29 @@ void CountingSort(NVector::TVector<TPair> & data, const unsigned int & size){
             count[j] = count[j] + count[j - 1];
         }
 
+        for(int j = size - 1; j >= 0; --j){
+            result[count[data[j].key[5-i]] - 1] = data[j];
+            count[data[j].key[5-i]]--;
+        }
 
+        for (int j = 0; j < size; ++j) {
+            data[j] = result[j];
+        }
 
     }
 
 }
+
+
+#ifdef TEST_ENTER
+
+void EnterKey(const TPair &data){
+    for (int i = 0; i < 6; ++i) {
+        std::cout << data.key[i];
+    }
+}
+
+#endif // TEST_ENTER
 
 
 int main() {
@@ -48,6 +68,8 @@ int main() {
 
         values.PushBack(initialVal);
     }
+
+
 #ifdef DEBUG
     for (int i = 0; i < values.GetSize(); ++i) {
         for (auto j : values[i].key){
@@ -56,6 +78,16 @@ int main() {
         std::cout << std::endl;
     }
 #endif // DEBUG
+
+    CountingSort(values, values.GetSize());
+
+    for (int i = 0; i < values.GetSize(); ++i) {
+        /*printf("%d%d%d%d%d%d %s", values[i].key[0], values[i].key[0], values[i].key[0], values[i].key[0],
+               values[i].key[0], values[i].key[0], values[i].val)*/
+
+        EnterKey(values[i]);
+        std::cout << ' ' << values[i].val << '\n';
+    }
 
     return 0;
 }
