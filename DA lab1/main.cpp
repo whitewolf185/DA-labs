@@ -3,6 +3,8 @@
 
 #define DEBUG
 
+const short MAXKEY = 10;
+
 struct TPair{
     short key[6]{};
     std::string val;
@@ -16,11 +18,19 @@ void ConvertStringToKey (TPair &tmp, const std::string &str){
 
 
 void CountingSort(NVector::TVector<TPair> & data, const unsigned int & size){
-    NVector::TVector<int> count(9);
+    NVector::TVector<int> count(MAXKEY);
+    NVector::TVector<TPair> result(size);
     for (int i = 0; i < 6; ++i) {
         for (int j = 0; j < size; ++j) {
-            count[data[j].key[i]];// TODO начинать надо с младшего разряда
+            count[data[j].key[5-i]]++;
         }
+
+        for (int j = 1; j < MAXKEY; ++j) {
+            count[j] = count[j] + count[j - 1];
+        }
+
+
+
     }
 
 }
