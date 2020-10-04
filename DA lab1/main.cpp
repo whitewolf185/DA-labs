@@ -7,13 +7,13 @@
 const short MAXKEY = 10;
 
 struct TPair{
-    short key[6]{};
+    short key[6]{0};
     std::string val;
 };
 
 void ConvertStringToKey (TPair &tmp, const std::string &str){
-    for (int i = 0; i < 6; ++i) {
-        tmp.key[i] = str[i] - '0';
+    for (int i = 0; i < str.length(); ++i) {
+        tmp.key[6-str.length()+i] = str[i] - '0';
     }
 }
 
