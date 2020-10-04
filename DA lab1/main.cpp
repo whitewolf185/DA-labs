@@ -80,7 +80,7 @@ int main() {
 #endif // DEBUG
 
     CountingSort(values, values.GetSize());
-    freopen("out.txt", "w", stdout);
+    //freopen("out.txt", "w", stdout);
     for (int i = 0; i < values.GetSize(); ++i) {
         /*printf("%d%d%d%d%d%d %s", values[i].key[0], values[i].key[0], values[i].key[0], values[i].key[0],
                values[i].key[0], values[i].key[0], values[i].val)*/
@@ -88,6 +88,6 @@ int main() {
         EnterKey(values[i]);
         std::cout << '\t' << values[i].val << '\n';
     }
-    fclose(stdout);
+    //fclose(stdout);
     return 0;
 }

@@ -25,6 +25,7 @@ namespace NVector {
 
         TVector() : size(0), capacity(1) {
             //std::cout << "TVector was created" << std::endl;
+            //data = NULL;
         };
 
         TVector(const unsigned int n) /*: TVector()*/ {
@@ -83,7 +84,9 @@ namespace NVector {
         }
 
         ~TVector(){
-            delete [] data;
+            if(!this->Empty()) {
+                delete[] data;
+            }
         }
     };
 }
