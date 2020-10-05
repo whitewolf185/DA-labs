@@ -24,9 +24,9 @@ namespace NVector {
             }
         }
 
-        TVector() : size(0), capacity(1) {
-            //std::cout << "TVector was created" << std::endl;
-            //data = NULL;
+        TVector() {
+            size = 0;
+            capacity = 1;
         };
 
         TVector(const unsigned int n) /*: TVector()*/ {
@@ -98,7 +98,6 @@ namespace NVector {
 //#define DEBUG
 //#define TEST_ENTER
 
-const short MAXKEY = 10;
 const int LEN = 2049;
 
 struct TPair{
@@ -107,6 +106,15 @@ struct TPair{
 
     TPair(){
         key = 0;
+    }
+
+    TPair(int n, char elem[LEN]){
+        strcpy(val,elem);
+        key = n;
+    }
+
+    ~TPair(){
+
     }
 };
 
