@@ -189,19 +189,21 @@ int main() {
     }
 #endif // DEBUG
 
-    CountingSort(values, maxNum);
-    //freopen("out.txt", "w", stdout);
-    for (int i = 0; i < values.GetSize(); ++i) {
-        if(values[i].key == 0){
-            printf("00000");
-        }
-
-        else{
-            for (int j = 0; j < 6 - 1 - log10(values[i].key); ++j) {
-                printf("0");
+    if(values.GetSize() != 0){
+        CountingSort(values, maxNum);
+        //freopen("out.txt", "w", stdout);
+        for (int i = 0; i < values.GetSize(); ++i) {
+            if(values[i].key == 0){
+                printf("00000");
             }
+
+            else{
+                for (int j = 0; j < 6 - 1 - log10(values[i].key); ++j) {
+                    printf("0");
+                }
+            }
+            printf("%d %s\n", values[i].key, values[i].val);
         }
-        printf("%d %s\n", values[i].key, values[i].val);
     }
     //fclose(stdout);
     return 0;
