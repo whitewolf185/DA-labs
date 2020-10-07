@@ -23,17 +23,10 @@ struct TPair{
     }
 };
 
-/*void ConvertStringToKey (TPair &tmp, const std::string &str){
-    for (int i = 0; i < str.length(); ++i) {
-        tmp.key[6-str.length()+i] = str[i] - '0';
-    }
-}*/
-
-
 void CountingSort(NVector::TVector<TPair> & data, const unsigned int & maxNum){
     NVector::TVector<int> count(maxNum + 1);
     NVector::TVector<TPair> result(data.GetSize());
-    //for (int i = 0; i < 6; ++i) {
+
         count.Assign(0);
         for (int j = 0; j < data.GetSize(); ++j) {
             count[data[j].key]++;
@@ -51,9 +44,6 @@ void CountingSort(NVector::TVector<TPair> & data, const unsigned int & maxNum){
         for (int j = 0; j < data.GetSize(); ++j) {
             data[j] = result[j];
         }
-
-    //}
-
 }
 
 
@@ -76,7 +66,6 @@ int main() {
     int maxNum = -1;
     while(scanf("%d %s", &key, val) > 0){
         TPair initialVal;
-        //ConvertStringToKey(initialVal, strKey);
         initialVal.key = key;
         strcpy(initialVal.val,val);
         values.PushBack(initialVal);
@@ -94,9 +83,8 @@ int main() {
     }
 #endif // DEBUG
 
-    if(values.GetSize() != 0){
+    if(!values.Empty()){
         CountingSort(values, maxNum);
-        //freopen("out.txt", "w", stdout);
         for (int i = 0; i < values.GetSize(); ++i) {
             if(values[i].key == 0){
                 printf("00000");
@@ -110,6 +98,5 @@ int main() {
             printf("%d %s\n", values[i].key, values[i].val);
         }
     }
-    //fclose(stdout);
     return 0;
 }
