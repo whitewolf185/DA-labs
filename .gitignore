@@ -1,0 +1,10 @@
+# Default ignored files
+*.out
+*.txt
+tmp*
+# Datasource local storage ignored files
+cmake-build-debug/
+cmake-build-wsl/
+.idea/
+# Editor-based HTTP Client requests
+/httpRequests/

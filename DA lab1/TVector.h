@@ -1,8 +1,11 @@
 #ifndef DA_LAB1_T_VECTOR_H
 #define DA_LAB1_T_VECTOR_H
 
-#include <iostream>
 #include <stdio.h>
+#include <math.h>
+#include <string.h>
+#include <algorithm>
+#include <iostream>
 namespace NVector {
 
 
@@ -23,9 +26,9 @@ namespace NVector {
             }
         }
 
-        TVector() : size(0), capacity(1) {
-            //std::cout << "TVector was created" << std::endl;
-            //data = NULL;
+        TVector() {
+            size = 0;
+            capacity = 1;
         };
 
         TVector(const unsigned int n) /*: TVector()*/ {
