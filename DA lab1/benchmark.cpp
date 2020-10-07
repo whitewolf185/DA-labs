@@ -52,8 +52,37 @@ bool operator< (TPair lhs, TPair rhs){
 int main(){
     NVector::TVector<TPair> values;
     std::vector<TPair> stl_values;
+    int maxNum = -1;
 
-    
+    int key;
+    char val[LEN];
+    while(scanf("%d %s", &key, val) > 0){
+        TPair initialVal;
+        initialVal.key = key;
+        strcpy(initialVal.val,val);
+        values.PushBack(initialVal);
+        stl_values.push_back(initialVal);
+
+        maxNum = std::max(maxNum, key);
+    }
+
+    long double start, end;
+
+    start = clock();
+    if(!values.Empty()){
+        CountingSort(values,maxNum);
+    }
+    end = clock();
+
+    std::cout << "my Counting sort " << (end - start)/1000.0 << '\n' << std::endl;
+
+    start = clock();
+    if(!stl_values.empty()){
+        std::stable_sort(stl_values.begin(), stl_values.end());
+    }
+    end = clock();
+
+    std::cout << "stable sort  " << (end - start)/1000.0 << '\n' << std::endl;
 
     return 0;
 }
