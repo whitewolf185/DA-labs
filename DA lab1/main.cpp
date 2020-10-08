@@ -1,8 +1,4 @@
 #include "TVector.h"
-
-//#define DEBUG
-//#define TEST_ENTER
-
 const int LEN = 2049;
 
 struct TPair{
@@ -47,17 +43,6 @@ void CountingSort(NVector::TVector<TPair> & data, const unsigned int & maxNum){
 }
 
 
-#ifdef TEST_ENTER
-
-void EnterKey(const TPair &data){
-    for (int i = 0; i < 6; ++i) {
-        std::cout << data.key[i];
-    }
-}
-
-#endif // TEST_ENTER
-
-
 int main() {
     NVector::TVector<TPair> values;
 
@@ -72,16 +57,6 @@ int main() {
 
         maxNum = std::max(maxNum, key);
     }
-
-
-#ifdef DEBUG
-    for (int i = 0; i < values.GetSize(); ++i) {
-        for (auto j : values[i].key){
-            std::cout << j;
-        }
-        std::cout << std::endl;
-    }
-#endif // DEBUG
 
     if(!values.Empty()){
         CountingSort(values, maxNum);

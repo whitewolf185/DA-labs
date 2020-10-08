@@ -1,7 +1,11 @@
 #include "TVector.h"
 #include <vector>
 #include <ctime>
+#include <chrono>
 const int LEN = 2049;
+
+using duration_t = std::chrono::milliseconds;
+const std::string DURATION_PREFIX = " sec";
 
 struct TPair{
     int key;
@@ -66,23 +70,32 @@ int main(){
         maxNum = std::max(maxNum, key);
     }
 
-    long double start, end;
+    //long double start_cl, end_cl;
 
-    start = clock();
+    //start_cl = clock();
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
     if(!values.Empty()){
         CountingSort(values,maxNum);
     }
-    end = clock();
+    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+    //end_cl = clock();
+    uint64_t counting_sort_ts = std::chrono::duration_cast<duration_t>( end - start).count();
 
-    std::cout << "my Counting sort " << (end - start)/1000.0 << '\n' << std::endl;
+    //std::cout << (end_cl - start_cl)/1000000.0 << std::endl;
 
-    start = clock();
+    //start_cl = clock();
+    start = std::chrono::system_clock::now();
     if(!stl_values.empty()){
         std::stable_sort(stl_values.begin(), stl_values.end());
     }
-    end = clock();
+    end = std::chrono::system_clock::now();
+    //end_cl = clock();
+    uint64_t stl_sort_ts = std::chrono::duration_cast<duration_t>( end - start ).count();
+    //std::cout << (end_cl - start_cl)/1000000.0 << std::endl;
 
-    std::cout << "stable sort  " << (end - start)/1000.0 << '\n' << std::endl;
+
+    std::cout << "Counting sort time: " << counting_sort_ts/1000.0 << DURATION_PREFIX << std::endl;
+    std::cout << "STL stable sort time: " << stl_sort_ts/1000.0 << DURATION_PREFIX << '\n' << std::endl;
 
     return 0;
 }
