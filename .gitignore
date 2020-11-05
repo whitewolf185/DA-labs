@@ -2,9 +2,11 @@
 *.out
 *.txt
 tmp*
+test*
 # Datasource local storage ignored files
 cmake-build-debug/
 cmake-build-wsl/
 .idea/
 # Editor-based HTTP Client requests
 /httpRequests/
+/cmake-mingw/
