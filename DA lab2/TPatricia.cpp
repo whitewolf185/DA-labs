@@ -11,6 +11,12 @@ NPatricia::TNode<T> *NPatricia::TPatricia<T>::Find(T &value) {
 
   while (iter->bit > prevBit) {
     prevBit = iter->bit;
-
+    if (GetBit(value, iter->bit)) {
+      iter = iter->right;
+    }
+    else {
+      iter = iter->left;
+    }
   }
 }
+

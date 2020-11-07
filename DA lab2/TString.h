@@ -10,7 +10,7 @@ namespace NMyString {
     char *buf = nullptr;
     unsigned int size = 0;
 
-    unsigned int StrLen(const char *str) {
+    static unsigned int StrLen(const char *str) {
       return (*str) ? StrLen(++str) + 1 : 0;
     }
 
@@ -78,6 +78,23 @@ namespace NMyString {
         return &buf[size + 1];
       }
       return nullptr;
+    }
+
+    char &operator[](const unsigned int &iterator) {
+      if (iterator > size) {
+        std::cout << "CAUTION: size was reached\niterator is " << iterator << std::endl;
+        return buf[size];
+      }
+      return buf[iterator];
+    }
+
+    friend std::istream &operator>>(std::istream &cin, NMyString::TString &obj) {
+      char buffer[2048];
+      cin.getline(buffer, sizeof(buffer));
+      obj.buf = buffer;
+      obj.size = StrLen(buffer);
+
+      return cin;
     }
   };
 }

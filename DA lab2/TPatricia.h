@@ -4,6 +4,9 @@
 #include <cstdio>
 #include "TString.h"
 
+//TODO я могу просто зашифровать ключ и работать с ним,
+// ведь получение ключа от меня не требуеются
+
 
 namespace NPatricia {
 

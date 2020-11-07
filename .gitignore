@@ -2,7 +2,7 @@
 *.out
 *.txt
 tmp*
-test*
+*test*
 # Datasource local storage ignored files
 cmake-build-debug/
 cmake-build-wsl/
