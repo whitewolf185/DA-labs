@@ -7,8 +7,21 @@
 //TODO я могу просто зашифровать ключ и работать с ним,
 // ведь получение ключа от меня не требуеются
 
-
 namespace NPatricia {
+
+  size_t GetBitFromString(const NMyString::TString &tmpString) {
+    size_t result = 0;
+
+    for (char i : tmpString) {
+      if (i >= 'A' && i <= 'Z') {
+        result = result * 26 + i - 'A';
+      }
+      else if (i >= 'a' && i <= 'z') {
+        result = result * 26 + i - 'a';
+      }
+    }
+    return result;
+  }
 
   struct TData {
     NMyString::TString key;
@@ -36,6 +49,12 @@ namespace NPatricia {
 
     bool GetBit(const T &value, size_t bit) {
       return ((1 << (bit - 1)) & value);
+    }
+
+    size_t FirstDiff(const T &lhs, const T &rhs) {
+      size_t i;
+      for (i = 0; get_bit(lhs, i) == get_bit(rhs, i); ++i) {}
+      return i;
     }
 
   public:

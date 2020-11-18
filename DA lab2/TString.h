@@ -66,14 +66,14 @@ namespace NMyString {
       return size;
     }
 
-    char *begin() {
+    char *begin() const {
       if (buf != nullptr) {
         return &buf[0];
       }
       return nullptr;
     }
 
-    char *end() {
+    char *end() const {
       if (buf != nullptr) {
         return &buf[size + 1];
       }
