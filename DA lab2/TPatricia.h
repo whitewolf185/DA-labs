@@ -24,10 +24,31 @@ namespace NPatricia {
   }
 
   struct TData {
-    NMyString::TString key;
+    size_t key;
     size_t digits;
 
-    TData() : digits(0) {}
+    TData() : digits(0), key(0) {}
+
+    TData(const NMyString::TString &str) : digits(0) {
+      key = GetBitFromString(str);
+    }
+
+    friend std::ostream &operator<<(std::ostream &cout, const TData &outVal) {
+      cout << outVal.digits;
+      return cout;
+    }
+
+    bool operator!=(const TData &rhs) const {
+      return this->key != rhs.key;
+    }
+
+    friend bool operator!=(const TData &lhs, const TData &rhs) {
+      return lhs.key != rhs.key;
+    }
+
+    friend bool operator==(const TData &lhs, const TData &rhs) {
+      return lhs.key == rhs.key;
+    }
   };
 
   template<class T>
@@ -39,6 +60,10 @@ namespace NPatricia {
 
     TNode(T &value, size_t bites) : val(value), bit(bites), left(nullptr), right(nullptr) {}
 
+    friend std::ostream &operator<<(std::ostream &cout, const TNode<T> &node) {
+      cout << node.val;
+    }
+
     ~TNode();
   };
 
@@ -47,9 +72,7 @@ namespace NPatricia {
   private:
     TNode<T> *header;
 
-    bool GetBit(const T &value, size_t bit) {
-      return ((1 << (bit - 1)) & value);
-    }
+    bool GetBit(const T &value, size_t bit);
 
     size_t FirstDiff(const T &lhs, const T &rhs) {
       size_t i;
@@ -57,14 +80,22 @@ namespace NPatricia {
       return i;
     }
 
+    TNode<T> *Find(const T &);
+
   public:
-    TNode<T> *Find(T &);
+
+    void FinalFind(const T &value) {
+      auto finder = Find(value);
+      if (finder == nullptr) {
+        std::cout << "NoSuchFile\n";
+        return;
+      }
+      std::cout << "OK: " << finder << '\n';
+    }
 
     void Insert(T &);
 
     void Erase(T &);
-
-    void Key(T &);
 
     TPatricia() : header(nullptr) {}
 
