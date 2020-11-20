@@ -39,7 +39,7 @@ NPatricia::TNode<T> *NPatricia::TPatricia<T>::Find(const T &value) {
 
 
 template<class T>
-void NPatricia::TPatricia<T>::Insert(T &value) {
+void NPatricia::TPatricia<T>::Insert(const T &value) {
   if (header == nullptr) {
     header = new TNode<T>(value, 0);
     header->left = header;
@@ -235,4 +235,18 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
 
   delete[] Q;
 
+}
+
+size_t NPatricia::GetBitFromString(const NMyString::TString &tmpString) {
+  size_t result = 0;
+
+  for (char i : tmpString) {
+    if (i >= 'A' && i <= 'Z') {
+      result = result * 26 + i - 'A';
+    }
+    else if (i >= 'a' && i <= 'z') {
+      result = result * 26 + i - 'a';
+    }
+  }
+  return result;
 }

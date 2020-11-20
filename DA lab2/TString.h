@@ -1,7 +1,6 @@
 #ifndef DA_LABS_TSTRING_H
 #define DA_LABS_TSTRING_H
 
-#include <string.h>
 #include <iostream>
 
 #define MAX_KEY 2048
@@ -26,31 +25,17 @@ namespace NMyString {
   public:
     TString() : buf(nullptr), size(0) {}
 
-    TString(const char *buffer) {
-      size = StrLen(buffer);
-      buf = new char[size + 1];
-      strncpy_s(buf, size + 1, buffer, size);
-    }
+    TString(const char *buffer);
 
-    TString &operator=(const char *value) {
-      size = StrLen(value);
-      buf = new char[size + 1];
-      strncpy_s(buf, size + 1, value, size);
-
-      return *this;
-    }
+    TString &operator=(const char *value);
 
     ~TString() {
       CleanUp();
     }
 
-    TString(const TString &obj) {
-      size = obj.size;
-      buf = new char[size + 1];
-      strncpy_s(buf, size + 1, obj.buf, size);
-    }
+    TString(const TString &obj);
 
-    TString &operator=(TString &&obj) {
+    TString &operator=(TString &&obj) noexcept {
       CleanUp();
 
       size = obj.size;
@@ -112,12 +97,13 @@ namespace NMyString {
 
       return *this;
     }
+
+    friend std::ostream &operator<<(std::ostream &cout, const NMyString::TString &obj) {
+      cout << obj.GetBuf();
+      return cout;
+    }
   };
 }
 
-std::ostream &operator<<(std::ostream &cout, const NMyString::TString &obj) {
-  cout << obj.GetBuf();
-  return cout;
-}
 
 #endif //DA_LABS_TSTRING_H

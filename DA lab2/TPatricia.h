@@ -4,24 +4,10 @@
 #include <cstdio>
 #include "TString.h"
 
-//TODO я могу просто зашифровать ключ и работать с ним,
-// ведь получение ключа от меня не требуеются
 
 namespace NPatricia {
 
-  size_t GetBitFromString(const NMyString::TString &tmpString) {
-    size_t result = 0;
-
-    for (char i : tmpString) {
-      if (i >= 'A' && i <= 'Z') {
-        result = result * 26 + i - 'A';
-      }
-      else if (i >= 'a' && i <= 'z') {
-        result = result * 26 + i - 'a';
-      }
-    }
-    return result;
-  }
+  size_t GetBitFromString(const NMyString::TString &tmpString);
 
   struct TData {
     size_t key;
@@ -29,7 +15,11 @@ namespace NPatricia {
 
     TData() : digits(0), key(0) {}
 
-    TData(const NMyString::TString &str) : digits(0) {
+    TData(const NMyString::TString &str, const size_t &dig) : digits(dig) {
+      key = GetBitFromString(str);
+    }
+
+    explicit TData(const NMyString::TString &str) : digits(0) {
       key = GetBitFromString(str);
     }
 
@@ -49,6 +39,14 @@ namespace NPatricia {
     friend bool operator==(const TData &lhs, const TData &rhs) {
       return lhs.key == rhs.key;
     }
+
+    friend bool operator<(const TData &lhs, const TData &rhs) {
+      return lhs.key < rhs.key;
+    }
+
+    friend bool operator>(const TData &lhs, const TData &rhs) {
+      return lhs.key > rhs.key;
+    }
   };
 
   template<class T>
@@ -62,6 +60,7 @@ namespace NPatricia {
 
     friend std::ostream &operator<<(std::ostream &cout, const TNode<T> &node) {
       cout << node.val;
+      return cout;
     }
 
     ~TNode();
@@ -76,7 +75,7 @@ namespace NPatricia {
 
     size_t FirstDiff(const T &lhs, const T &rhs) {
       size_t i;
-      for (i = 0; get_bit(lhs, i) == get_bit(rhs, i); ++i) {}
+      for (i = 0; GetBit(lhs, i) == GetBit(rhs, i); ++i) {}
       return i;
     }
 
@@ -87,13 +86,13 @@ namespace NPatricia {
     void FinalFind(const T &value) {
       auto finder = Find(value);
       if (finder == nullptr) {
-        std::cout << "NoSuchFile\n";
+        std::cout << "Exist\n";
         return;
       }
       std::cout << "OK: " << finder << '\n';
     }
 
-    void Insert(T &);
+    void Insert(const T &);
 
     void Erase(T &);
 
