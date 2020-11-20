@@ -4,6 +4,8 @@
 #include <string.h>
 #include <iostream>
 
+#define MAX_KEY 2048
+
 namespace NMyString {
   class TString {
   private:
@@ -89,12 +91,26 @@ namespace NMyString {
     }
 
     friend std::istream &operator>>(std::istream &cin, NMyString::TString &obj) {
-      char buffer[2048];
+      char buffer[MAX_KEY];
       cin.getline(buffer, sizeof(buffer));
       obj.buf = buffer;
       obj.size = StrLen(buffer);
 
       return cin;
+    }
+
+    TString &operator+=(const char &rhs) {
+      unsigned int sz = this->size + 1;
+      char *ts = new char[sz + 1];
+      for (int i = 0; i < this->size + 1; ++i) {
+        ts[i] = this->buf[i];
+      }
+      ts[this->size + 1] = rhs;
+
+      delete this->buf;
+      this->buf = ts;
+
+      return *this;
     }
   };
 }

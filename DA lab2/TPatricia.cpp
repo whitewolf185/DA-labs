@@ -219,6 +219,20 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
   auto N = prev;
 
   //-----------начинаю переприсваивание------------
+  if (N->left == Q) {
+    N->left = M;
+  }
+  else {
+    N->right = M;
+  }
 
+  if (R->left == Q) {
+    R->left = X;
+  }
+  else {
+    R->right = X;
+  }
+
+  delete[] Q;
 
 }
