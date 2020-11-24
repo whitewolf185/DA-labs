@@ -143,11 +143,11 @@ namespace NPatricia {
 
     TData() : digits(0), key(0) {}
 
-    TData(const NMyString::TString &str, const size_t &dig) : Str(str), digits(dig) {
+    TData(const NMyString::TString &str, const size_t &dig) : digits(dig) {
       key = GetBitFromString(str);
     }
 
-    explicit TData(const NMyString::TString &str) : Str(str), digits(0) {
+    explicit TData(const NMyString::TString &str) : digits(0) {
       key = GetBitFromString(str);
     }
 
@@ -179,8 +179,18 @@ namespace NPatricia {
     unsigned long long bit;
     TNode<T> *left;
     TNode<T> *right;
+    int id = -1;
+
+    //TNode(): bit(0), left(this), right(this),val(0){}
 
     TNode(const T &value, unsigned long long bites) : val(value), bit(bites), left(nullptr), right(nullptr) {}
+
+    void Initialize(const T value, unsigned long long bites, TNode<T> *L, TNode<T> *R) {
+      val = value;
+      bit = bites;
+      left = L;
+      right = R;
+    }
 
     friend std::ostream &operator<<(std::ostream &cout, const TNode<T> &node) {
       cout << node.val;
@@ -222,41 +232,25 @@ namespace NPatricia {
 
     void Erase(T &);
 
-    void PrintDefinitions(TNode<TData> *node, std::ofstream &out);
+    //void PrintDefinitions(TNode<TData> *node, std::ofstream &out);
 
-    void PrintRelations(TNode<TData> *node, std::ofstream &out);
+    //void PrintRelations(TNode<TData> *node, std::ofstream &out);
 
-    void Save(std::ofstream &file) {
-      // подаем размер дерева
-      file.write((const char *) &(size), sizeof(int));
+    void Save(std::ofstream &file);
 
-      // пронумеровка узлов, инициализация массива указателей
-      int index = 0;
-      TNode<T> **nodes;
-      try {
-        nodes = new TNode<T> *[size + 1];
+    void Load(std::ifstream &file);
+
+    void Enumerate(TNode<T> *node, TNode<T> **nodes, int &index) {
+      // важно, что index передается по ссылке: айди узлов не будут повторяться
+      node->id = index;
+      nodes[index] = node;
+      ++index;
+      if (node->left->bit > node->bit) {
+        Enumerate(node->left, nodes, index);
       }
-      catch (const std::bad_alloc &e) {
-        std::cout << "ERROR: fail to allocate the requested storage space\n";
-        return;
+      if (node->right != nullptr && node->right->bit > node->bit) {
+        Enumerate(node->right, nodes, index);
       }
-      enumerate(root, nodes, index);
-
-      // теперь просто последовательно (как при обходе в enumerate)
-      // подаем всю инфу об узлах, но вместо указателей left/right подаем
-      // айди узлов (каковы они были при обходе в enumerate) left/right
-      TNode<T> *node;
-      for (int i = 0; i < (size + 1); ++i) {
-        node = nodes[i];
-        file.write((const char *) &(node->value), sizeof(TValue));
-        file.write((const char *) &(node->bit), sizeof(int));
-        int len = node->key ? strlen(node->key) : 0;
-        file.write((const char *) &(len), sizeof(int));
-        file.write(node->key, sizeof(char) * len);
-        file.write((const char *) &(node->left->id), sizeof(int));
-        file.write((const char *) &(node->right->id), sizeof(int));
-      }
-      delete[] nodes;
     }
 
     TPatricia() : header(nullptr) {}
@@ -268,6 +262,80 @@ namespace NPatricia {
 //---------------------end of TPatricia.h--------------------
 
 //--------------------TPatricia.cpp------------------------
+
+template<>
+void NPatricia::TPatricia<NPatricia::TData>::Save(std::ofstream &file) {
+  {
+    // подаем размер дерева
+    file.write((const char *) &(size), sizeof(int));
+
+    // пронумеровка узлов, инициализация массива указателей
+    int index = 0;
+    TNode<TData> **nodes;
+    try {
+      nodes = new TNode<TData> *[size + 1];
+    }
+    catch (const std::bad_alloc &e) {
+      std::cout << "ERROR: fail to allocate the requested storage space\n";
+      return;
+    }
+    Enumerate(header, nodes, index);
+
+    // теперь просто последовательно (как при обходе в enumerate)
+    // подаем всю инфу об узлах, но вместо указателей left/right подаем
+    // айди узлов (каковы они были при обходе в enumerate) left/right
+    TNode<TData> *node;
+    for (int i = 0; i < (size + 1); ++i) {
+      node = nodes[i];
+      file.write((const char *) &(node->val), sizeof(TData));
+      file.write((const char *) &(node->bit), sizeof(unsigned long long));
+      //file.write((const char *) &(node->val.key), sizeof(unsigned long long));
+      file.write((const char *) &(node->left->id), sizeof(int));
+      file.write((const char *) &(node->right->id), sizeof(int));
+    }
+    delete[] nodes;
+  }
+}
+
+template<>
+void NPatricia::TPatricia<NPatricia::TData>::Load(std::ifstream &file) {
+  // считываем размер
+  int n;
+  file.read((char *) &n, sizeof(unsigned int));
+  size = n;
+  // если он нуль - выходим
+  if (!size) {
+    return;
+  }
+
+  TNode<TData> **nodes = new TNode<TData> *[size + 1];
+  // рут уже инициализировался, когда мы пишем создали new TPatricia()
+  // незачем этого делать повторно
+  nodes[0] = header;
+  for (int i = 1; i < (size + 1); ++i) {
+    // а вот прочие узлы надо инитнуть
+    nodes[i] = new TNode<TData>(NPatricia::TData(), 0);
+  }
+
+  // поля узлов, которые нам предстоит считывать
+  int bit;
+  int len;
+  TData value;
+  int idLeft, idRight;
+
+  for (int i = 0; i < (size + 1); ++i) {
+    file.read((char *) &(value), sizeof(TData));
+    file.read((char *) &(bit), sizeof(unsigned long long));
+    // поскольку считываем в том же порядке, что и писали в Load-e
+    // айди узлов-сыновей будут сохранять свой порядок, и дерево соберется таким же
+    file.read((char *) &(idLeft), sizeof(int));
+    file.read((char *) &(idRight), sizeof(int));
+    nodes[i]->Initialize(value, bit, nodes[idLeft], nodes[idRight]);
+  }
+
+  delete[] nodes;
+}
+
 template<class T>
 bool NPatricia::TPatricia<T>::GetBit(const T &value, unsigned long long bit) {
   return ((1u << (bit - 1)) & value);
@@ -277,6 +345,7 @@ template<>
 bool NPatricia::TPatricia<NPatricia::TData>::GetBit(const TData &value, unsigned long long bit) {
   return ((1u << (bit - 1)) & value.key);
 }
+
 
 template<class T>
 NPatricia::TNode<T> *NPatricia::TPatricia<T>::Find(const T &value) {
@@ -373,6 +442,7 @@ void NPatricia::TPatricia<T>::Insert(const T &value) {
 template<class T>
 void NPatricia::TPatricia<T>::Erase(T &value) {
 
+  //пустая патриция
   if (header == nullptr) {
     printf("NoSuchWord\n");
     return;
@@ -393,12 +463,14 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
     }
   }
 
+  //в патриции нет удаляемого файла
   if (cur->val != value) {
     printf("NoSuchWord\n");
     return;
   }
 
 
+  //если удалить надо header
   if (pred->bit == 0) {
     delete cur;
     header = nullptr;
@@ -407,6 +479,7 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
     return;
   }
 
+  //флаг на то удаляем мы header или нет
   int h = 0;
   if (cur->bit == 0) {
     h = 1;
@@ -414,7 +487,7 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
     cur = pred;
   }
 
-
+  //случай с ссылкой на себя
   if (((cur->left == cur) && (pred == cur)) || ((cur->right == cur) && (pred == cur))) {
     pred = header;
     while ((pred->left != cur) && (pred->right != cur)) {
@@ -461,10 +534,13 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
     }
   }
 
+
+  //удаляем не header
   if (h == 1) {
 
     auto pred_head = header;
 
+    //указание на cur сверху
     while ((pred_head->left != cur) && (pred_head->right != cur)) {
 
       if (GetBit(cur->val, pred_head->bit)) {
@@ -477,6 +553,7 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
 
     pred = cur;
 
+    //обратная ссылка на cur
     while ((pred->left != cur) && (pred->right != cur)) {
       if (GetBit(cur->val, pred->bit)) {
         pred = pred->right;
@@ -565,23 +642,17 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
   }
 
   else {
-
     if (newpred->left == pred) {
-
       newpred->left = cur;
     }
     else {
-
       newpred->right = cur;
     }
-
     if (pred_pred->right == pred) {
       pred_pred->right = pred->left;
-
     }
     else {
       pred_pred->left = pred->left;
-
     }
   }
 
