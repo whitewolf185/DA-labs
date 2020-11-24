@@ -12,4 +12,4 @@ add_executable(DA_lab2
         #     "DA lab2/TString.h"
         #     "DA lab2/TString.cpp"
         "DA lab2/main.cpp")
-add_executable(test_DA2 "DA lab2/string_test.cpp" "DA lab2/TString.h" "DA lab2/TString.cpp")
+#add_executable(test_DA2 "DA lab2/string_test.cpp" "DA lab2/TString.h" "DA lab2/TString.cpp")

@@ -1,8 +1,9 @@
 #include <cstdio>
 #include <iostream>
+#include <fstream>
 
 //-----------------string--------------------
-#define MAX_KEY 300
+#define MAX_KEY 400
 #define size_t unsigned long long
 
 namespace NMyString {
@@ -41,6 +42,16 @@ namespace NMyString {
       size = obj.size;
       buf = obj.buf;
       obj = nullptr;
+
+      return *this;
+    }
+
+    TString &operator=(const TString &obj) noexcept {
+      CleanUp();
+
+      size = obj.size;
+      buf = new char[StrLen(obj.buf)];
+      buf = obj.buf;
 
       return *this;
     }
@@ -84,22 +95,10 @@ namespace NMyString {
       return cin;
     }
 
-    TString &operator+=(const char &rhs) {
-      unsigned int sz = this->size + 1;
-      char *ts = new char[sz + 1];
-      for (int i = 0; i < this->size + 1; ++i) {
-        ts[i] = this->buf[i];
-      }
-      ts[this->size + 1] = rhs;
-
-      delete this->buf;
-      this->buf = ts;
-
-      return *this;
-    }
-
     friend std::ostream &operator<<(std::ostream &cout, const NMyString::TString &obj) {
-      cout << obj.GetBuf();
+      for (auto i : obj) {
+        cout << i;
+      }
       return cout;
     }
   };
@@ -135,7 +134,7 @@ NMyString::TString::TString(const NMyString::TString &obj) {
 //------------------end of string cpp-------------------------
 
 
-//---------------TPatricia.h---------------------------
+//---------------------TPatricia.h---------------------------
 namespace NPatricia {
 
   size_t GetBitFromString(const NMyString::TString &tmpString);
@@ -143,24 +142,21 @@ namespace NPatricia {
   struct TData {
     unsigned long long key;
     unsigned long long digits;
+    NMyString::TString Str;
 
     TData() : digits(0), key(0) {}
 
-    TData(const NMyString::TString &str, const size_t &dig) : digits(dig) {
+    TData(const NMyString::TString &str, const size_t &dig) : Str(str), digits(dig) {
       key = GetBitFromString(str);
     }
 
-    explicit TData(const NMyString::TString &str) : digits(0) {
+    explicit TData(const NMyString::TString &str) : Str(str), digits(0) {
       key = GetBitFromString(str);
     }
 
     friend std::ostream &operator<<(std::ostream &cout, const TData &outVal) {
       cout << outVal.digits;
       return cout;
-    }
-
-    bool operator!=(const TData &rhs) const {
-      return this->key != rhs.key;
     }
 
     friend bool operator!=(const TData &lhs, const TData &rhs) {
@@ -212,6 +208,7 @@ namespace NPatricia {
 
     TNode<T> *Find(const T &);
 
+
   public:
 
     void FinalFind(const T &value) {
@@ -226,6 +223,10 @@ namespace NPatricia {
     void Insert(const T &);
 
     void Erase(T &);
+
+    void PrintDefinitions(TNode<TData> *node, std::ofstream &out);
+
+    void PrintRelations(TNode<TData> *node, std::ofstream &out);
 
     TPatricia() : header(nullptr) {}
 
@@ -337,174 +338,242 @@ void NPatricia::TPatricia<T>::Insert(const T &value) {
 
 template<class T>
 void NPatricia::TPatricia<T>::Erase(T &value) {
-  //если вообще ничего нет
+
   if (header == nullptr) {
-    std::cout << "NoSuchWord\n";
+    printf("NoSuchWord\n");
     return;
   }
 
-  //если слова нет (из-за этого может быть tl)
-  NPatricia::TNode<T> *elem;
-  TNode<T> *iter = header->left;
-  TNode<T> *prev = header;
 
-  while (iter->bit > prev->bit) {
-    prev = iter;
-    if (GetBit(value, iter->bit)) {
-      iter = iter->right;
+  auto pred = header;
+  auto cur = header->left;
+
+
+  while (cur->bit > pred->bit) {
+    pred = cur;
+    if (GetBit(value, cur->bit)) {
+      cur = cur->right;
     }
     else {
-      iter = iter->left;
+      cur = cur->left;
     }
   }
 
-  if (iter->val == value) {
-    elem = iter;
-  }
-  else {
-    elem = nullptr;
-  }
-
-  if (elem == nullptr) {
-    std::cout << "NoSuchWord\n";
+  if (cur->val != value) {
+    printf("NoSuchWord\n");
     return;
   }
 
-  //удаление header
-  if (header->val == value && (header->left == nullptr || header->left->bit == header->bit)) {
-    delete[] header;
+
+  if (pred->bit == 0) {
+    delete cur;
     header = nullptr;
-    std::cout << "OK\n";
+    printf("OK\n");
     return;
   }
 
-  if (elem == header) {
-    header->val = prev->val;
-    Erase(prev->val);
-    return;
+  int h = 0;
+  if (cur->bit == 0) {
+    h = 1;
+    cur->val = pred->val;
+    cur = pred;
   }
 
-  iter = header->left;
-  prev = header;
 
-
-  //-----------случай с ссылкой на себя--------------
-  if ((elem->right != nullptr && elem->right->bit == elem->bit) ||
-      (elem->left != nullptr && elem->left->bit == elem->bit)) {
-    while (iter->bit > prev->bit && iter != elem) {
-      prev = iter;
-      if (GetBit(value, iter->bit)) {
-        iter = iter->right;
+  if (((cur->left == cur) && (pred == cur)) || ((cur->right == cur) && (pred == cur))) {
+    pred = header;
+    while ((pred->left != cur) && (pred->right != cur)) {
+      if (GetBit(value, pred->bit)) {
+        pred = pred->right;
       }
       else {
-        iter = iter->left;
+        pred = pred->left;
+      }
+    }
+  }
+
+  if (cur->left == cur) {
+    if (pred->right == cur) {
+      pred->right = cur->right;
+      delete cur;
+      printf("OK\n");
+      return;
+    }
+    else {
+      pred->left = cur->right;
+      delete cur;
+      printf("OK\n");
+      return;
+    }
+  }
+
+  if (cur->right == cur) {
+    if (pred->right == cur) {
+      pred->right = cur->left;
+      delete cur;
+      printf("OK\n");
+      return;
+    }
+    else {
+      pred->left = cur->left;
+      delete cur;
+      printf("OK\n");
+      return;
+    }
+  }
+
+  if (h == 1) {
+
+    auto pred_head = header;
+
+    while ((pred_head->left != cur) && (pred_head->right != cur)) {
+
+      if (GetBit(cur->val, pred_head->bit)) {
+        pred_head = pred_head->right;
+      }
+      else {
+        pred_head = pred_head->left;
       }
     }
 
-    if (iter->right != nullptr && iter->bit == iter->right->bit) {
-      if (prev->right != nullptr && prev->right->val == iter->val) {
-        prev->right = iter->left;
-        delete[] iter;
-        std::cout << "OK\n";
-        return;
+    pred = cur;
+
+    while ((pred->left != cur) && (pred->right != cur)) {
+      if (GetBit(cur->val, pred->bit)) {
+        pred = pred->right;
       }
-      if (prev->left != nullptr && prev->left->val == iter->val) {
-        prev->left = iter->left;
-        delete[] iter;
-        std::cout << "OK\n";
-        return;
+      else {
+        pred = pred->left;
       }
     }
 
-    else if (iter->left != nullptr && iter->bit == iter->left->bit) {
-      if (prev->right != nullptr && prev->right->val == iter->val) {
-        prev->right = iter->right;
-        delete[] iter;
-        std::cout << "OK\n";
-        return;
+
+    if (cur->right == header) {
+      if (pred_head->right == cur) {
+        pred_head->right = cur->left;
       }
-      if (prev->left != nullptr && prev->left->val == iter->val) {
-        prev->left = iter->right;
-        delete[] iter;
-        std::cout << "OK\n";
-        return;
+      else {
+        pred_head->left = cur->left;
+      }
+
+      if (pred->left == cur) {
+        pred->left = cur->right;
+      }
+      else {
+        pred->right = cur->right;
       }
     }
-    std::cout << "ERROR: something goes wrong" << std::endl;
+    else {
+      if (pred_head->right == cur) {
+        pred_head->right = cur->right;
+      }
+      else {
+        pred_head->left = cur->right;
+      }
+
+      if (pred->left == cur) {
+        pred->left = cur->left;
+      }
+      else {
+        pred->right = cur->left;
+      }
+    }
+
+    delete cur;
+    printf("OK\n");
+
     return;
-  }
-  //----конец случая ссылки на себя------
 
-  while (iter->bit > prev->bit) {
-    prev = iter;
-    if (GetBit(value, iter->bit)) {
-      iter = iter->right;
+  }
+
+  pred = cur;
+  auto pred_pred = pred;
+
+  while ((pred->left != cur) && (pred->right != cur)) {
+    pred_pred = pred;
+    if (GetBit(cur->val, pred->bit)) {
+      pred = pred->right;
     }
     else {
-      iter = iter->left;
+      pred = pred->left;
     }
   }
 
-  iter->val = prev->val;
-  TNode<T> *M;
-  auto X = iter;
-  if (prev->left != iter) {
-    M = prev->left;
-  }
-  else {
-    M = prev->right;
-  }
+  auto newpred = pred;
 
-  value = prev->val;
-
-  iter = header->left;
-  prev = header;
-
-  while (iter->bit > prev->bit) {
-    prev = iter;
-    if (GetBit(value, iter->bit)) {
-      iter = iter->right;
+  while ((newpred->left != pred) && (newpred->right != pred)) {
+    if (GetBit(pred->val, newpred->bit)) {
+      newpred = newpred->right;
     }
     else {
-      iter = iter->left;
+      newpred = newpred->left;
     }
   }
 
-  auto R = prev;
-  auto Q = iter;
-
-  iter = header->left;
-  prev = header;
-
-  while (iter->bit > prev->bit && Q != iter) {
-    prev = iter;
-    if (GetBit(value, iter->bit)) {
-      iter = iter->right;
+  if (pred->left == cur) {
+    if (newpred->left == pred) {
+      newpred->left = cur;
     }
     else {
-      iter = iter->left;
+      newpred->right = cur;
+    }
+    if (pred_pred->right == pred) {
+      pred_pred->right = pred->right;
+    }
+    else {
+      pred_pred->left = pred->right;
     }
   }
-  auto N = prev;
 
-  //-----------начинаю переприсваивание------------
-  if (N->left == Q) {
-    N->left = M;
-  }
   else {
-    N->right = M;
+
+    if (newpred->left == pred) {
+
+      newpred->left = cur;
+    }
+    else {
+
+      newpred->right = cur;
+    }
+
+    if (pred_pred->right == pred) {
+      pred_pred->right = pred->left;
+
+    }
+    else {
+      pred_pred->left = pred->left;
+
+    }
   }
 
-  if (R->left == Q) {
-    R->left = X;
-  }
-  else {
-    R->right = X;
-  }
+  cur->val = pred->val;
 
-  delete[] Q;
+  delete pred;
+
+  printf("OK\n");
+
+  return;
 
 }
+
+#define SAFE_KEY(node) (node->val.Str)
+
+template<>
+void NPatricia::TPatricia<NPatricia::TData>::PrintDefinitions(NPatricia::TNode<TData> *node, std::ofstream &out) {
+  out << ' ' << SAFE_KEY(node) << "[label=\"" << SAFE_KEY(node) << ", " << node->bit << "\"];\n";
+  if (node->left != nullptr && node->left->bit > node->bit) {
+    PrintDefinitions(node->left, out);
+  }
+  if (node->right != nullptr && node->right->bit > node->bit) {
+    PrintDefinitions(node->right, out);
+  }
+}
+
+template<>
+void NPatricia::TPatricia<NPatricia::TData>::PrintRelations(TNode<TData> *node, std::ofstream &out) {
+
+}
+
 
 size_t NPatricia::GetBitFromString(const NMyString::TString &tmpString) {
   size_t result = 0;
@@ -544,6 +613,7 @@ int main() {
       NMyString::TString inputStr = input;
       NPatricia::TData inData(input);
       patric.Erase(inData);
+      //patric.Print(inputStr);
     }
 
       //find
