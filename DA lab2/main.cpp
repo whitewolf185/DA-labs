@@ -112,7 +112,6 @@ NMyString::TString::TString(const char *buffer) {
   for (int i = 0; i < size; ++i) {
     buf[i] = buffer[i];
   }
-  //strncpy_s(buf, size + 1, buffer, size);
 }
 
 NMyString::TString &NMyString::TString::operator=(const char *value) {
@@ -121,7 +120,6 @@ NMyString::TString &NMyString::TString::operator=(const char *value) {
   for (int i = 0; i < size; ++i) {
     buf[i] = value[i];
   }
-  //strncpy_s(buf, size + 1, value, size);
 
   return *this;
 }
@@ -129,7 +127,6 @@ NMyString::TString &NMyString::TString::operator=(const char *value) {
 NMyString::TString::TString(const NMyString::TString &obj) {
   size = obj.size;
   buf = new char[size + 1];
-  //strncpy_s(buf, size + 1, obj.buf, size);
 }
 //------------------end of string cpp-------------------------
 
@@ -142,7 +139,7 @@ namespace NPatricia {
   struct TData {
     unsigned long long key;
     unsigned long long digits;
-    NMyString::TString Str;
+    //NMyString::TString Str;
 
     TData() : digits(0), key(0) {}
 
@@ -197,6 +194,7 @@ namespace NPatricia {
   class TPatricia {
   private:
     TNode<T> *header;
+    unsigned int size = 0;
 
     bool GetBit(const T &value, unsigned long long bit);
 
@@ -227,6 +225,39 @@ namespace NPatricia {
     void PrintDefinitions(TNode<TData> *node, std::ofstream &out);
 
     void PrintRelations(TNode<TData> *node, std::ofstream &out);
+
+    void Save(std::ofstream &file) {
+      // подаем размер дерева
+      file.write((const char *) &(size), sizeof(int));
+
+      // пронумеровка узлов, инициализация массива указателей
+      int index = 0;
+      TNode<T> **nodes;
+      try {
+        nodes = new TNode<T> *[size + 1];
+      }
+      catch (const std::bad_alloc &e) {
+        std::cout << "ERROR: fail to allocate the requested storage space\n";
+        return;
+      }
+      enumerate(root, nodes, index);
+
+      // теперь просто последовательно (как при обходе в enumerate)
+      // подаем всю инфу об узлах, но вместо указателей left/right подаем
+      // айди узлов (каковы они были при обходе в enumerate) left/right
+      TNode<T> *node;
+      for (int i = 0; i < (size + 1); ++i) {
+        node = nodes[i];
+        file.write((const char *) &(node->value), sizeof(TValue));
+        file.write((const char *) &(node->bit), sizeof(int));
+        int len = node->key ? strlen(node->key) : 0;
+        file.write((const char *) &(len), sizeof(int));
+        file.write(node->key, sizeof(char) * len);
+        file.write((const char *) &(node->left->id), sizeof(int));
+        file.write((const char *) &(node->right->id), sizeof(int));
+      }
+      delete[] nodes;
+    }
 
     TPatricia() : header(nullptr) {}
 
@@ -277,10 +308,12 @@ NPatricia::TNode<T> *NPatricia::TPatricia<T>::Find(const T &value) {
 
 template<class T>
 void NPatricia::TPatricia<T>::Insert(const T &value) {
+
   if (header == nullptr) {
     header = new TNode<T>(value, 0);
     header->left = header;
     std::cout << "OK\n";
+    ++size;
     return;
   }
 
@@ -333,6 +366,7 @@ void NPatricia::TPatricia<T>::Insert(const T &value) {
     newNode->right = iter;
   }
   std::cout << "OK\n";
+  ++size;
 }
 
 
@@ -369,6 +403,7 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
     delete cur;
     header = nullptr;
     printf("OK\n");
+    --size;
     return;
   }
 
@@ -397,12 +432,14 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
       pred->right = cur->right;
       delete cur;
       printf("OK\n");
+      --size;
       return;
     }
     else {
       pred->left = cur->right;
       delete cur;
       printf("OK\n");
+      --size;
       return;
     }
   }
@@ -412,12 +449,14 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
       pred->right = cur->left;
       delete cur;
       printf("OK\n");
+      --size;
       return;
     }
     else {
       pred->left = cur->left;
       delete cur;
       printf("OK\n");
+      --size;
       return;
     }
   }
@@ -481,7 +520,7 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
 
     delete cur;
     printf("OK\n");
-
+    --size;
     return;
 
   }
@@ -551,26 +590,8 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
   delete pred;
 
   printf("OK\n");
-
+  --size;
   return;
-
-}
-
-#define SAFE_KEY(node) (node->val.Str)
-
-template<>
-void NPatricia::TPatricia<NPatricia::TData>::PrintDefinitions(NPatricia::TNode<TData> *node, std::ofstream &out) {
-  out << ' ' << SAFE_KEY(node) << "[label=\"" << SAFE_KEY(node) << ", " << node->bit << "\"];\n";
-  if (node->left != nullptr && node->left->bit > node->bit) {
-    PrintDefinitions(node->left, out);
-  }
-  if (node->right != nullptr && node->right->bit > node->bit) {
-    PrintDefinitions(node->right, out);
-  }
-}
-
-template<>
-void NPatricia::TPatricia<NPatricia::TData>::PrintRelations(TNode<TData> *node, std::ofstream &out) {
 
 }
 
