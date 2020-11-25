@@ -291,7 +291,13 @@ void NPatricia::TPatricia<NPatricia::TData>::Save(std::ofstream &file) {
       file.write((const char *) &(node->bit), sizeof(unsigned long long));
       //file.write((const char *) &(node->val.key), sizeof(unsigned long long));
       file.write((const char *) &(node->left->id), sizeof(int));
-      file.write((const char *) &(node->right->id), sizeof(int));
+      if (node->right != nullptr) {
+        file.write((const char *) &(node->right->id), sizeof(int));
+      }
+      else {
+        int tmp = -2;
+        file.write((const char *) &(tmp), sizeof(int));
+      }
     }
     delete[] nodes;
   }
@@ -330,7 +336,12 @@ void NPatricia::TPatricia<NPatricia::TData>::Load(std::ifstream &file) {
     // айди узлов-сыновей будут сохранять свой порядок, и дерево соберется таким же
     file.read((char *) &(idLeft), sizeof(int));
     file.read((char *) &(idRight), sizeof(int));
-    nodes[i]->Initialize(value, bit, nodes[idLeft], nodes[idRight]);
+    if (idRight == -2) {
+      nodes[i]->Initialize(value, bit, nodes[idLeft], nullptr);
+    }
+    else {
+      nodes[i]->Initialize(value, bit, nodes[idLeft], nodes[idRight]);
+    }
   }
 
   delete[] nodes;
@@ -471,7 +482,7 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
 
 
   //если удалить надо header
-  if (pred->bit == 0) {
+  if (pred == header) {
     delete cur;
     header = nullptr;
     printf("OK\n");
@@ -481,7 +492,7 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
 
   //флаг на то удаляем мы header или нет
   int h = 0;
-  if (cur->bit == 0) {
+  if (cur == header) {
     h = 1;
     cur->val = pred->val;
     cur = pred;
@@ -687,8 +698,19 @@ size_t NPatricia::GetBitFromString(const NMyString::TString &tmpString) {
 
 int main() {
   char input[MAX_KEY];
-  NPatricia::TPatricia<NPatricia::TData> patric;
+  NPatricia::TPatricia<NPatricia::TData> *patric;
   unsigned long long curVal;
+
+  try {
+    patric = new NPatricia::TPatricia<NPatricia::TData>();
+  }
+  catch (std::bad_alloc &e) {
+    std::cout << "ERROR: fail to allocate the requested storage space\n";
+    std::terminate();
+  }
+
+  std::ofstream fout;
+  std::ifstream fin;
 
   while (scanf("%s", input) > 0) {
     //input
@@ -696,7 +718,7 @@ int main() {
       scanf("%s%llu", input, &curVal);
       NMyString::TString inputStr = input;
       NPatricia::TData inData(inputStr, curVal);
-      patric.Insert(inData);
+      patric->Insert(inData);
     }
 
       //erase
@@ -704,15 +726,54 @@ int main() {
       scanf("%s", input);
       NMyString::TString inputStr = input;
       NPatricia::TData inData(input);
-      patric.Erase(inData);
+      patric->Erase(inData);
       //patric.Print(inputStr);
+    }
+
+      //save and load
+    else if (input[0] == '!') {
+      scanf("%s", input);
+
+      //load
+      if (input[0] == 'L') {
+        scanf("%s", input);
+        NMyString::TString inputStr = input;
+        fin.open(input, std::ios::in | std::ios::binary);
+        if (!fin.is_open()) {
+          std::cout << "ERROR: can't open file\n";
+          continue;
+        }
+
+        delete patric;
+        patric = new NPatricia::TPatricia<NPatricia::TData>();
+        patric->Load(fin);
+
+        std::cout << "OK\n";
+
+        fin.close();
+      }
+
+        //save
+      else {
+        scanf("%s", input);
+        fout.open(input, std::ios::out | std::ios::binary | std::ios::trunc);
+        if (!fout.is_open()) {
+          std::cout << "ERROR: can't create file\n";
+          continue;
+        }
+
+        patric->Save(fout);
+        std::cout << "OK\n";
+
+        fout.close();
+      }
     }
 
       //find
     else {
       NMyString::TString inputStr = input;
       NPatricia::TData inData(input);
-      patric.FinalFind(inData);
+      patric->FinalFind(inData);
     }
   }
   return 0;
