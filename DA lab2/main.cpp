@@ -3,7 +3,7 @@
 #include <fstream>
 
 //-----------------string--------------------
-#define MAX_KEY 400
+#define MAX_KEY 257
 #define size_t unsigned long long
 
 namespace NMyString {
@@ -17,9 +17,7 @@ namespace NMyString {
     }
 
     void CleanUp() {
-      if (buf != nullptr) {
-        delete[] buf;
-      }
+      delete[] buf;
       size = 0;
     }
 
@@ -64,14 +62,14 @@ namespace NMyString {
       return size;
     }
 
-    char *begin() const {
+    [[nodiscard]] char *begin() const {
       if (buf != nullptr) {
         return &buf[0];
       }
       return nullptr;
     }
 
-    char *end() const {
+    [[nodiscard]] char *end() const {
       if (buf != nullptr) {
         return &buf[size];
       }
@@ -181,15 +179,17 @@ namespace NPatricia {
     TNode<T> *right;
     int id = -1;
 
-    //TNode(): bit(0), left(this), right(this),val(0){}
+    TNode() : bit(0), left(this), right(this), val(0) {}
 
-    TNode(const T &value, unsigned long long bites) : val(value), bit(bites), left(nullptr), right(nullptr) {}
+    TNode(const T &value, unsigned long long bites) : val(value), bit(bites), left(this), right(this) {}
 
     void Initialize(const T value, unsigned long long bites, TNode<T> *L, TNode<T> *R) {
       val = value;
       bit = bites;
       left = L;
-      right = R;
+      if (right != nullptr) {
+        right = R;
+      }
     }
 
     friend std::ostream &operator<<(std::ostream &cout, const TNode<T> &node) {
@@ -266,9 +266,13 @@ namespace NPatricia {
 template<>
 void NPatricia::TPatricia<NPatricia::TData>::Save(std::ofstream &file) {
   {
+
     // подаем размер дерева
     file.write((const char *) &(size), sizeof(int));
-
+    //если нечего сохранять - не сохраняем
+    if (!size) {
+      return;
+    }
     // пронумеровка узлов, инициализация массива указателей
     int index = 0;
     TNode<TData> **nodes;
@@ -285,7 +289,7 @@ void NPatricia::TPatricia<NPatricia::TData>::Save(std::ofstream &file) {
     // подаем всю инфу об узлах, но вместо указателей left/right подаем
     // айди узлов (каковы они были при обходе в enumerate) left/right
     TNode<TData> *node;
-    for (int i = 0; i < (size + 1); ++i) {
+    for (int i = 0; i < (size); ++i) {
       node = nodes[i];
       file.write((const char *) &(node->val), sizeof(TData));
       file.write((const char *) &(node->bit), sizeof(unsigned long long));
@@ -317,19 +321,19 @@ void NPatricia::TPatricia<NPatricia::TData>::Load(std::ifstream &file) {
   TNode<TData> **nodes = new TNode<TData> *[size + 1];
   // рут уже инициализировался, когда мы пишем создали new TPatricia()
   // незачем этого делать повторно
-  nodes[0] = header;
-  for (int i = 1; i < (size + 1); ++i) {
+  for (int i = 0; i < (size); ++i) {
     // а вот прочие узлы надо инитнуть
     nodes[i] = new TNode<TData>(NPatricia::TData(), 0);
   }
+  header = nodes[0];
+  header->right = nullptr;
 
   // поля узлов, которые нам предстоит считывать
   int bit;
-  int len;
   TData value;
   int idLeft, idRight;
 
-  for (int i = 0; i < (size + 1); ++i) {
+  for (int i = 0; i < (size); ++i) {
     file.read((char *) &(value), sizeof(TData));
     file.read((char *) &(bit), sizeof(unsigned long long));
     // поскольку считываем в том же порядке, что и писали в Load-e
@@ -483,10 +487,12 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
 
   //если удалить надо header
   if (pred == header) {
-    delete cur;
+    delete[] cur;
     header = nullptr;
     printf("OK\n");
-    --size;
+    if (size) {
+      --size;
+    }
     return;
   }
 
@@ -514,16 +520,20 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
   if (cur->left == cur) {
     if (pred->right == cur) {
       pred->right = cur->right;
-      delete cur;
+      delete[] cur;
       printf("OK\n");
-      --size;
+      if (size) {
+        --size;
+      }
       return;
     }
     else {
       pred->left = cur->right;
-      delete cur;
+      delete[] cur;
       printf("OK\n");
-      --size;
+      if (size) {
+        --size;
+      }
       return;
     }
   }
@@ -531,16 +541,20 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
   if (cur->right == cur) {
     if (pred->right == cur) {
       pred->right = cur->left;
-      delete cur;
+      delete[] cur;
       printf("OK\n");
-      --size;
+      if (size) {
+        --size;
+      }
       return;
     }
     else {
       pred->left = cur->left;
-      delete cur;
+      delete[] cur;
       printf("OK\n");
-      --size;
+      if (size) {
+        --size;
+      }
       return;
     }
   }
@@ -606,9 +620,11 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
       }
     }
 
-    delete cur;
+    delete[] cur;
     printf("OK\n");
-    --size;
+    if (size) {
+      --size;
+    }
     return;
 
   }
@@ -669,12 +685,12 @@ void NPatricia::TPatricia<T>::Erase(T &value) {
 
   cur->val = pred->val;
 
-  delete pred;
+  delete[] pred;
 
   printf("OK\n");
-  --size;
-  return;
-
+  if (size) {
+    --size;
+  }
 }
 
 
@@ -744,7 +760,7 @@ int main() {
           continue;
         }
 
-        delete patric;
+        delete[] patric;
         patric = new NPatricia::TPatricia<NPatricia::TData>();
         patric->Load(fin);
 
@@ -776,5 +792,6 @@ int main() {
       patric->FinalFind(inData);
     }
   }
+  delete[] patric;
   return 0;
 }
