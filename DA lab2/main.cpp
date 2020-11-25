@@ -210,7 +210,7 @@ namespace NPatricia {
 
     unsigned long long FirstDiff(const T &lhs, const T &rhs) {
       unsigned long long i;
-      for (i = 0; GetBit(lhs, i) == GetBit(rhs, i); ++i) {}
+      for (i = 1; GetBit(lhs, i) == GetBit(rhs, i); ++i) {}
       return i;
     }
 
