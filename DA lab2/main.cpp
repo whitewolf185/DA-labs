@@ -49,7 +49,7 @@ static inline void LowerCase(char *str) {
 }
 
 //----------------NODE-----------------
-const int MAXLEN = 257;
+const int MAX_LEN = 257;
 //typedef unsigned long long TValue;
 //typedef char TKey;
 
@@ -58,10 +58,10 @@ namespace NPatricia {
   class TNode {
   private:
     int id = -1;
-    int bit;
+    int bit{};
 
     T *key;
-    unsigned long long value;
+    unsigned long long value{};
   public:
     TNode *left;
     TNode *right;
@@ -76,8 +76,8 @@ namespace NPatricia {
       return id;
     }
 
-    void SetID(int IDiter) {
-      id = IDiter;
+    void SetID(int iDiter) {
+      id = iDiter;
     }
 
     unsigned long long &GetRvalVal() {
@@ -129,7 +129,7 @@ namespace NPatricia {
     }
 
     TNode() {
-      Initialize(-1, 0, 0, this, this);
+      Initialize(-1, nullptr, 0, this, this);
     }
 
     TNode(int b, T *k, unsigned long long v) {
@@ -250,7 +250,7 @@ namespace NPatricia {
       TNode<T>
               *p,
               *t,
-              *pp = 0;
+              *pp = nullptr;
 
       p = root;
       t = (p->left);
@@ -430,7 +430,7 @@ int main() {
   std::ofstream fout;
   std::ifstream fin;
 
-  char input[MAXLEN];
+  char input[MAX_LEN];
   unsigned long long value;
 
   // основное дерево patric

@@ -15,25 +15,10 @@ NMyString::TString::TString(const char *buffer) {
   LowerCase();
 }
 
-NMyString::TString &NMyString::TString::operator=(const char *value) {
-  if (value == nullptr) {
-    size = 0;
-    buf = nullptr;
-    return *this;
-  }
-
-  size = StrLen(value);
-  buf = new char[size + 1];
-  if (size) {
-    strcpy(buf, value);
-  }
-  LowerCase();
-  return *this;
-}
-
 
 NMyString::TString::TString(const NMyString::TString &obj) {
   size = obj.size;
   buf = new char[size + 1];
-}
+  *buf = *obj.buf;
+  }
 //------------------end of string cpp-------------------------

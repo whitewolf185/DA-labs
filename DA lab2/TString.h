@@ -35,7 +35,6 @@ namespace NMyString {
 
     TString(const char *buffer);
 
-    TString &operator=(const char *value);
 
     ~TString() {
       CleanUp();
