@@ -143,6 +143,11 @@ namespace NPatricia {
     ~TNode() {
       delete[] key;
     }
+
+    friend std::ostream &operator<<(std::ostream &out, const TNode<T> &obj) {
+      out << obj.value;
+      return out;
+    }
   };
 }
 //--------------end of Node-------------
@@ -501,7 +506,7 @@ int main() {
         std::cout << "NoSuchWord";
       }
       else {
-        std::cout << "OK: " << node->GetVal();
+        std::cout << "OK: " << node;
       }
       std::cout << '\n';
     }
