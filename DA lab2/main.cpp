@@ -62,14 +62,14 @@ namespace NMyString {
       return size;
     }
 
-    [[nodiscard]] char *begin() const {
+    char *begin() const {
       if (buf != nullptr) {
         return &buf[0];
       }
       return nullptr;
     }
 
-    [[nodiscard]] char *end() const {
+    char *end() const {
       if (buf != nullptr) {
         return &buf[size];
       }
@@ -255,7 +255,21 @@ namespace NPatricia {
 
     TPatricia() : header(nullptr) {}
 
-    ~TPatricia() = default;
+    ~TPatricia() {
+      if (header != nullptr) {
+        CleanUp(header);
+      }
+    }
+
+    void CleanUp(TNode<T> *node) {
+      if (node->left->bit > node->bit) {
+        CleanUp(node->left);
+      }
+      if (node->right != nullptr && node->right->bit > node->bit) {
+        CleanUp(node->right);
+      }
+      delete node;
+    }
   };
 
 }
@@ -760,7 +774,7 @@ int main() {
           continue;
         }
 
-        delete[] patric;
+        delete patric;
         patric = new NPatricia::TPatricia<NPatricia::TData>();
         patric->Load(fin);
 
@@ -792,6 +806,6 @@ int main() {
       patric->FinalFind(inData);
     }
   }
-  delete[] patric;
+  //delete patric;
   return 0;
 }
