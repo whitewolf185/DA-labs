@@ -1,132 +1,8 @@
-#include <cstdio>
-#include <iostream>
-#include <fstream>
+#include "TString.h"
 
-//-----------------string--------------------
-#define MAX_KEY 257
-#define size_t unsigned long long
+//-------------------include sting here--------------------
 
-namespace NMyString {
-  class TString {
-  private:
-    char *buf = nullptr;
-    unsigned int size = 0;
-
-    static unsigned int StrLen(const char *str) {
-      return (*str) ? StrLen(++str) + 1 : 0;
-    }
-
-    void CleanUp() {
-      delete[] buf;
-      size = 0;
-    }
-
-  public:
-    TString() : buf(nullptr), size(0) {}
-
-    TString(const char *buffer);
-
-    TString &operator=(const char *value);
-
-    ~TString() {
-      CleanUp();
-    }
-
-    TString(const TString &obj);
-
-    TString &operator=(TString &&obj) noexcept {
-      CleanUp();
-
-      size = obj.size;
-      buf = obj.buf;
-      obj = nullptr;
-
-      return *this;
-    }
-
-    TString &operator=(const TString &obj) noexcept {
-      CleanUp();
-
-      size = obj.size;
-      buf = new char[StrLen(obj.buf)];
-      buf = obj.buf;
-
-      return *this;
-    }
-
-    const char *GetBuf() const {
-      return buf;
-    }
-
-    unsigned int GetSize() const {
-      return size;
-    }
-
-    char *begin() const {
-      if (buf != nullptr) {
-        return &buf[0];
-      }
-      return nullptr;
-    }
-
-    char *end() const {
-      if (buf != nullptr) {
-        return &buf[size];
-      }
-      return nullptr;
-    }
-
-    char &operator[](const unsigned int &iterator) {
-      if (iterator > size) {
-        std::cout << "CAUTION: size was reached\niterator is " << iterator << std::endl;
-        return buf[size - 1];
-      }
-      return buf[iterator];
-    }
-
-    friend std::istream &operator>>(std::istream &cin, NMyString::TString &obj) {
-      char buffer[MAX_KEY];
-      cin.getline(buffer, sizeof(buffer));
-      obj.buf = buffer;
-      obj.size = StrLen(buffer);
-
-      return cin;
-    }
-
-    friend std::ostream &operator<<(std::ostream &cout, const NMyString::TString &obj) {
-      for (auto i : obj) {
-        cout << i;
-      }
-      return cout;
-    }
-  };
-}
-//----------------end of string-------------------
-
-//----------------stirng cpp----------------------
-NMyString::TString::TString(const char *buffer) {
-  size = StrLen(buffer);
-  buf = new char[size + 1];
-  for (int i = 0; i < size; ++i) {
-    buf[i] = buffer[i];
-  }
-}
-
-NMyString::TString &NMyString::TString::operator=(const char *value) {
-  size = StrLen(value);
-  buf = new char[size + 1];
-  for (int i = 0; i < size; ++i) {
-    buf[i] = value[i];
-  }
-
-  return *this;
-}
-
-NMyString::TString::TString(const NMyString::TString &obj) {
-  size = obj.size;
-  buf = new char[size + 1];
-}
-//------------------end of string cpp-------------------------
+//-------------------include sting here--------------------
 
 
 //---------------------TPatricia.h---------------------------
@@ -135,7 +11,7 @@ namespace NPatricia {
   size_t GetBitFromString(const NMyString::TString &tmpString);
 
   struct TData {
-    unsigned long long key;
+    NMyString::TString key;
     unsigned long long digits;
     //NMyString::TString Str;
 
@@ -372,7 +248,7 @@ bool NPatricia::TPatricia<T>::GetBit(const T &value, unsigned long long bit) {
 
 template<>
 bool NPatricia::TPatricia<NPatricia::TData>::GetBit(const TData &value, unsigned long long bit) {
-  return ((1u << (bit - 1)) & value.key);
+  return (value.key[bit / 8] >> (7 - (bit % 8))) & 1;
 }
 
 
@@ -746,7 +622,7 @@ int main() {
     //input
     if (input[0] == '+') {
       scanf("%s%llu", input, &curVal);
-      NMyString::TString inputStr = input;
+      NMyString::TString inputStr(input);
       NPatricia::TData inData(inputStr, curVal);
       patric->Insert(inData);
     }
@@ -754,7 +630,7 @@ int main() {
       //erase
     else if (input[0] == '-') {
       scanf("%s", input);
-      NMyString::TString inputStr = input;
+      NMyString::TString inputStr(input);
       NPatricia::TData inData(input);
       patric->Erase(inData);
       //patric.Print(inputStr);
@@ -767,7 +643,6 @@ int main() {
       //load
       if (input[0] == 'L') {
         scanf("%s", input);
-        NMyString::TString inputStr = input;
         fin.open(input, std::ios::in | std::ios::binary);
         if (!fin.is_open()) {
           std::cout << "ERROR: can't open file\n";
@@ -801,7 +676,7 @@ int main() {
 
       //find
     else {
-      NMyString::TString inputStr = input;
+      NMyString::TString inputStr(input);
       NPatricia::TData inData(input);
       patric->FinalFind(inData);
     }
