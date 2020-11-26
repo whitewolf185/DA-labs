@@ -15,14 +15,14 @@ namespace NPatricia {
     unsigned long long digits;
     //NMyString::TString Str;
 
-    TData() : digits(0), key(0) {}
+    TData() : digits(0), key(nullptr) {}
 
     TData(const NMyString::TString &str, const size_t &dig) : digits(dig) {
-      key = GetBitFromString(str);
+      key = str;
     }
 
     explicit TData(const NMyString::TString &str) : digits(0) {
-      key = GetBitFromString(str);
+      key = str;
     }
 
     friend std::ostream &operator<<(std::ostream &cout, const TData &outVal) {
@@ -37,14 +37,6 @@ namespace NPatricia {
     friend bool operator==(const TData &lhs, const TData &rhs) {
       return lhs.key == rhs.key;
     }
-
-    friend bool operator<(const TData &lhs, const TData &rhs) {
-      return lhs.key < rhs.key;
-    }
-
-    friend bool operator>(const TData &lhs, const TData &rhs) {
-      return lhs.key > rhs.key;
-    }
   };
 
   template<class T>
@@ -57,7 +49,9 @@ namespace NPatricia {
 
     TNode() : bit(0), left(this), right(this), val(0) {}
 
-    TNode(const T &value, unsigned long long bites) : val(value), bit(bites), left(this), right(this) {}
+    TNode(const T &value, unsigned long long bites) : bit(bites), left(this), right(this) {
+      val = value;
+    }
 
     void Initialize(const T value, unsigned long long bites, TNode<T> *L, TNode<T> *R) {
       val = value;
@@ -248,6 +242,7 @@ bool NPatricia::TPatricia<T>::GetBit(const T &value, unsigned long long bit) {
 
 template<>
 bool NPatricia::TPatricia<NPatricia::TData>::GetBit(const TData &value, unsigned long long bit) {
+  //TODO тут чет я тупой
   return (value.key[bit / 8] >> (7 - (bit % 8))) & 1;
 }
 

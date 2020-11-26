@@ -131,6 +131,10 @@ namespace NMyString {
         buf[i] = buf[i] >= 'A' && buf[i] <= 'Z' ? buf[i] - 'A' + 'a' : buf[i];
       }
     }
+
+    void Initialise() {
+
+    }
   };
 }
 //----------------end of string-------------------
