@@ -53,7 +53,7 @@ const int MAX_LEN = 257;
 //typedef unsigned long long TValue;
 //typedef char TKey;
 
-namespace NPatricia {
+
   template<class T>
   class TNode {
   private:
@@ -149,12 +149,12 @@ namespace NPatricia {
       return out;
     }
   };
-}
+
 //--------------end of Node-------------
 
 
 //-----------Patricia-------------
-namespace NPatricia {
+
   template<class T>
   struct TPatricia {
     TNode<T> *root;
@@ -251,7 +251,6 @@ namespace NPatricia {
     }
 
     bool Delete(char *k) {
-      // прадед удаляемого узла pp, родитель p и сам сын t (сына предстоит удалить)
       TNode<T>
               *p,
               *t,
@@ -260,14 +259,12 @@ namespace NPatricia {
       p = root;
       t = (p->left);
 
-      // найдем pp, p и t
       while (p->GetBit() < t->GetBit()) {
         pp = p;
         p = t;
         t = (GetBit(k, t->GetBit()) ? t->right : t->left);
       }
 
-      // если ключа искомого-то и нет -- выходим
       if (!Equal(k, t->GetKey())) {
         return false;
       }
@@ -275,23 +272,18 @@ namespace NPatricia {
       TNode<T> *x, *r;
       char *key;
 
-      // если p == t, то у t есть селфпоинтер. в таком случае достаточно лишь
-      // переподвесить к родителю (pp) "реальный" указатель t, который не селфпоинтер
       if (p != t) {
-        // иначе же, кладем ключ и знач. p в t, чтобы далее удалять именно p, а не t
         KVCopy(p, t);
 
         key = p->GetKey();
         r = p;
         x = (GetBit(key, p->GetBit()) ? p->right : p->left);
 
-        // ищем того, кто на p бекпоинтерит (будет лежать в r; а х, по сути, будет в точности равняться p)
         while (r->GetBit() < x->GetBit()) {
           r = x;
           x = (GetBit(key, x->GetBit()) ? x->right : x->left);
         }
 
-        // и вместо бекпоинтера на p, будем бекпоинтерить на t
         if (GetBit(key, r->GetBit())) {
           r->right = t;
         }
@@ -300,7 +292,6 @@ namespace NPatricia {
         }
       }
 
-      // остается подвесить к родителю p (pp) "реальный" указатель p, который не селфпоинтер
       TNode<T> *ch = (GetBit(k, p->GetBit()) ? p->left : p->right);
       if (GetBit(k, pp->GetBit())) {
         pp->right = ch;
@@ -334,12 +325,12 @@ namespace NPatricia {
 
     void Load(std::ifstream &file);
   };
-}
+
 //---------end of patricia-----------
 
 //--------------------------Save------------------------------
 template<>
-void NPatricia::TPatricia<char>::Save(std::ofstream &file) {
+void TPatricia<char>::Save(std::ofstream &file) {
   // подаем размер дерева
   file.write((const char *) &(size), sizeof(int));
 
@@ -354,10 +345,6 @@ void NPatricia::TPatricia<char>::Save(std::ofstream &file) {
     return;
   }
   Enumerate(root, nodes, index);
-
-  // теперь просто последовательно (как при обходе в Enumerate)
-  // подаем всю инфу об узлах, но вместо указателей left/right подаем
-  // айди узлов (каковы они были при обходе в Enumerate) left/right
   TNode<char> *node;
   for (int i = 0; i < (size + 1); ++i) {
     node = nodes[i];
@@ -376,7 +363,7 @@ void NPatricia::TPatricia<char>::Save(std::ofstream &file) {
 
 //--------------------------------Load------------------------------------
 template<>
-void NPatricia::TPatricia<char>::Load(std::ifstream &file) {
+void TPatricia<char>::Load(std::ifstream &file) {
   // считываем размер
   int n;
   file.read((char *) &n, sizeof(int));
@@ -387,11 +374,8 @@ void NPatricia::TPatricia<char>::Load(std::ifstream &file) {
   }
 
   TNode<char> **nodes = new TNode<char> *[size + 1];
-  // рут уже инициализировался, когда мы пишем создали new Trie()
-  // незачем этого делать повторно
   nodes[0] = root;
   for (int i = 1; i < (size + 1); ++i) {
-    // а вот прочие узлы надо инитнуть
     nodes[i] = new TNode<char>();
   }
 
@@ -431,7 +415,7 @@ int main() {
   std::cin.tie(0);
   std::cout.tie(0);
 
-  // потоки i/o -- файлы для сериализации/десериализации, хранения/считывания конструкции патриции
+
   std::ofstream fout;
   std::ifstream fin;
 
@@ -439,16 +423,16 @@ int main() {
   unsigned long long value;
 
   // основное дерево patric
-  NPatricia::TPatricia<char> *patric;
+  TPatricia<char> *patric;
   try {
-    patric = new NPatricia::TPatricia<char>();
+    patric = new TPatricia<char>();
   }
   catch (const std::bad_alloc &e) {
     std::cout << "ERROR: fail to allocate the requested storage space\n";
     exit(0);
   }
 
-  NPatricia::TNode<char> *node;
+  TNode<char> *node;
 
   while ((std::cin >> input)) {
     if (!std::strcmp(input, "+")) {
@@ -490,7 +474,7 @@ int main() {
         }
 
         delete patric;
-        patric = new NPatricia::TPatricia<char>();
+        patric = new TPatricia<char>();
         patric->Load(fin);
 
         std::cout << "OK\n";
@@ -506,7 +490,7 @@ int main() {
         std::cout << "NoSuchWord";
       }
       else {
-        std::cout << "OK: " << node;
+        std::cout << "OK: " << node->GetVal();
       }
       std::cout << '\n';
     }
