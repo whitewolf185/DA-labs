@@ -50,9 +50,6 @@ static inline void LowerCase(char *str) {
 
 //----------------NODE-----------------
 const int MAX_LEN = 257;
-//typedef unsigned long long TValue;
-//typedef char TKey;
-
 
   template<class T>
   class TNode {
@@ -165,6 +162,10 @@ const int MAX_LEN = 257;
       size = 0;
     }
 
+    ~TPatricia() {
+      CleanUp(root);
+    }
+
     void CleanUp(TNode<T> *node) {
       if (node->left->GetBit() > node->GetBit()) {
         CleanUp(node->left);
@@ -175,10 +176,6 @@ const int MAX_LEN = 257;
       delete node;
     }
 
-    ~TPatricia() {
-      CleanUp(root);
-    }
-
     TNode<T> *Find(char *key) {
       TNode<T> *p = root;
       TNode<T> *q = root->left;
@@ -187,56 +184,9 @@ const int MAX_LEN = 257;
         p = q;
         q = (GetBit(key, q->GetBit()) ? q->right : q->left);
       }
-
       if (!Equal(key, q->GetKey())) {
         return 0;
       }
-
-      return q;
-    }
-
-    TNode<T> *Insert(char *key, unsigned long long value) {
-      TNode<T> *p = root;
-      TNode<T> *q = root->left;
-      while (p->GetBit() < q->GetBit()) {
-        p = q;
-        q = (GetBit(key, q->GetBit()) ? q->right : q->left);
-      }
-
-      if (Equal(key, q->GetKey())) {
-        return 0;
-      }
-
-      int lBitPos = FirstDifBit(key, q->GetKey());
-
-      p = root;
-      TNode<T> *x = root->left;
-
-      while (p->GetBit() < x->GetBit() && x->GetBit() < lBitPos) {
-        p = x;
-        x = (GetBit(key, x->GetBit()) ? x->right : x->left);
-      }
-
-      try {
-        q = new TNode<T>();
-      }
-      catch (const std::bad_alloc &e) {
-        std::cout << "ERROR: fail to allocate the requested storage space\n";
-        return 0;
-      }
-
-      q->Initialize(lBitPos, key, value,
-                    (GetBit(key, lBitPos) ? x : q),
-                    (GetBit(key, lBitPos) ? q : x));
-
-      if (GetBit(key, p->GetBit())) {
-        p->right = q;
-      }
-      else {
-        p->left = q;
-      }
-
-      size++;
       return q;
     }
 
@@ -250,83 +200,136 @@ const int MAX_LEN = 257;
       dest->SetVal(src->GetVal());
     }
 
-    bool Delete(char *k) {
-      TNode<T>
-              *p,
-              *t,
-              *pp = nullptr;
+    bool Insert(T *key, unsigned long long value);
 
-      p = root;
-      t = (p->left);
-
-      while (p->GetBit() < t->GetBit()) {
-        pp = p;
-        p = t;
-        t = (GetBit(k, t->GetBit()) ? t->right : t->left);
-      }
-
-      if (!Equal(k, t->GetKey())) {
-        return false;
-      }
-
-      TNode<T> *x, *r;
-      char *key;
-
-      if (p != t) {
-        KVCopy(p, t);
-
-        key = p->GetKey();
-        r = p;
-        x = (GetBit(key, p->GetBit()) ? p->right : p->left);
-
-        while (r->GetBit() < x->GetBit()) {
-          r = x;
-          x = (GetBit(key, x->GetBit()) ? x->right : x->left);
-        }
-
-        if (GetBit(key, r->GetBit())) {
-          r->right = t;
-        }
-        else {
-          r->left = t;
-        }
-      }
-
-      TNode<T> *ch = (GetBit(k, p->GetBit()) ? p->left : p->right);
-      if (GetBit(k, pp->GetBit())) {
-        pp->right = ch;
-      }
-      else {
-        pp->left = ch;
-      }
-
-      delete p;
-
-      size--;
-
-      return true;
-    }
+    bool Delete(T *k);
 
     void Save(std::ofstream &file);
 
-
-    void Enumerate(TNode<T> *node, TNode<T> **nodes, int &index) {
-      // важно, что index передается по ссылке: айди узлов не будут повторяться
-      node->SetID(index);
-      nodes[index] = node;
-      ++index;
-      if (node->left->GetBit() > node->GetBit()) {
-        Enumerate(node->left, nodes, index);
-      }
-      if (node->right->GetBit() > node->GetBit()) {
-        Enumerate(node->right, nodes, index);
-      }
-    }
+    void Enumerate(TNode<T> *node, TNode<T> **nodes, int &index);
 
     void Load(std::ifstream &file);
   };
 
 //---------end of patricia-----------
+
+template<class T>
+bool TPatricia<T>::Insert(T *key, unsigned long long value) {
+  TNode<T> *p = root;
+  TNode<T> *q = root->left;
+  while (p->GetBit() < q->GetBit()) {
+    p = q;
+    q = (GetBit(key, q->GetBit()) ? q->right : q->left);
+  }
+
+  if (Equal(key, q->GetKey())) {
+    return false;
+  }
+
+  int lBitPos = FirstDifBit(key, q->GetKey());
+
+  p = root;
+  TNode<T> *x = root->left;
+
+  while (p->GetBit() < x->GetBit() && x->GetBit() < lBitPos) {
+    p = x;
+    x = (GetBit(key, x->GetBit()) ? x->right : x->left);
+  }
+
+  try {
+    q = new TNode<T>();
+  }
+  catch (const std::bad_alloc &e) {
+    std::cout << "ERROR: fail to allocate the requested storage space\n";
+    return false;
+  }
+
+  q->Initialize(lBitPos, key, value,
+                (GetBit(key, lBitPos) ? x : q),
+                (GetBit(key, lBitPos) ? q : x));
+
+  if (GetBit(key, p->GetBit())) {
+    p->right = q;
+  }
+  else {
+    p->left = q;
+  }
+
+  size++;
+  return true;
+}
+
+template<class T>
+bool TPatricia<T>::Delete(T *k) {
+  TNode<T>
+          *p,
+          *t,
+          *pp = nullptr;
+
+  p = root;
+  t = (p->left);
+
+  while (p->GetBit() < t->GetBit()) {
+    pp = p;
+    p = t;
+    t = (GetBit(k, t->GetBit()) ? t->right : t->left);
+  }
+
+  if (!Equal(k, t->GetKey())) {
+    return false;
+  }
+
+  TNode<T> *x, *r;
+  char *key;
+
+  if (p != t) {
+    KVCopy(p, t);
+
+    key = p->GetKey();
+    r = p;
+    x = (GetBit(key, p->GetBit()) ? p->right : p->left);
+
+    while (r->GetBit() < x->GetBit()) {
+      r = x;
+      x = (GetBit(key, x->GetBit()) ? x->right : x->left);
+    }
+
+    if (GetBit(key, r->GetBit())) {
+      r->right = t;
+    }
+    else {
+      r->left = t;
+    }
+  }
+
+  TNode<T> *ch = (GetBit(k, p->GetBit()) ? p->left : p->right);
+  if (GetBit(k, pp->GetBit())) {
+    pp->right = ch;
+  }
+  else {
+    pp->left = ch;
+  }
+
+  delete p;
+
+  size--;
+
+  return true;
+}
+
+template<class T>
+void TPatricia<T>::Enumerate(TNode<T> *node, TNode<T> **nodes, int &index) {
+  // важно, что index передается по ссылке: айди узлов не будут повторяться
+  node->SetID(index);
+  nodes[index] = node;
+  ++index;
+  if (node->left->GetBit() > node->GetBit()) {
+    Enumerate(node->left, nodes, index);
+  }
+  if (node->right->GetBit() > node->GetBit()) {
+    Enumerate(node->right, nodes, index);
+  }
+}
 
 //--------------------------Save------------------------------
 template<>
@@ -422,7 +425,6 @@ int main() {
   char input[MAX_LEN];
   unsigned long long value;
 
-  // основное дерево patric
   TPatricia<char> *patric;
   try {
     patric = new TPatricia<char>();
