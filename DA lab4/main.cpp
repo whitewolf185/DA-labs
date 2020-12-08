@@ -4,7 +4,11 @@
 #include <vector>
 #include <map>
 #include <exception>
+#include <set>
 
+//#define DEBUG
+
+std::set<unsigned> ALPHABET;
 
 struct TValue {
   unsigned int val;
@@ -12,24 +16,42 @@ struct TValue {
   unsigned int wordCount;
 };
 
-void PatternParser(std::map<int, int> &Pattern) {
+struct TAnsVal {
+  unsigned lineCount;
+  unsigned wordCount;
+};
+
+//мапка нужна для того, чтобы в массиве table сопостовлять алфавит с индексами
+void PatternParser(std::vector<unsigned> &Pattern, std::map<unsigned, unsigned> &mapPattern) {
   char c;
   std::string str;
-  unsigned id = 1;
   c = getchar();
+  unsigned id = 1;
   bool spaceFlag = false;
   while (c != '\n') {
     if (c == ' ' && spaceFlag) {
       unsigned doomGuy = std::stoi(str);
-      Pattern.insert({id, doomGuy});
+      Pattern.push_back(doomGuy);
+      mapPattern.insert({doomGuy, id});
       ++id;
+      ALPHABET.insert(doomGuy);
       spaceFlag = false;
+      str.clear();
     }
     else {
       str.push_back(c);
       spaceFlag = true;
     }
     c = getchar();
+  }
+  if (spaceFlag) {
+    unsigned doomGuy = std::stoi(str);
+    Pattern.push_back(doomGuy);
+    mapPattern.insert({doomGuy, id});
+    ++id;
+    ALPHABET.insert(doomGuy);
+    spaceFlag = false;
+    str.clear();
   }
 }
 
@@ -47,6 +69,7 @@ void TextParser(std::vector<TValue> &text) {
       unsigned doomGuy;
       doomGuy = std::stoi(str);
       text.push_back({doomGuy, lineCount, wordCount});
+      ALPHABET.insert(doomGuy);
       str.clear();
       spaceFlag = false;
     }
@@ -58,6 +81,7 @@ void TextParser(std::vector<TValue> &text) {
         unsigned doomGuy;
         doomGuy = std::stoi(str);
         text.push_back({doomGuy, lineCount, wordCount});
+        ALPHABET.insert(doomGuy);
         str.clear();
       }
       spaceFlag = false;
@@ -68,24 +92,57 @@ void TextParser(std::vector<TValue> &text) {
       spaceFlag = true;
     }
 
-    else {
+    else if (c != ' ') {
       throw std::invalid_argument("Wrong argument. Check your input\n");
     }
   }
+  if (spaceFlag) {
+    ++wordCount;
+    unsigned doomGuy;
+    doomGuy = std::stoi(str);
+    text.push_back({doomGuy, lineCount, wordCount});
+    ALPHABET.insert(doomGuy);
+    str.clear();
+  }
 }
 
-void TBM() {
 
+bool operator==(const unsigned lhs, const TValue &rhs) {
+  return lhs == rhs.val;
+}
+
+
+std::vector<TAnsVal> TBM(const std::vector<unsigned> &Pattern, const std::vector<TValue> &Text,
+                         const std::map<unsigned, unsigned> &mapPattern) {
+
+}
+
+std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
+  out << obj.lineCount << ", " << obj.wordCount;
+  return out;
 }
 
 
 int main() {
-  std::map<int, int> Pattern;
+  std::vector<unsigned> Pattern;
   std::vector<TValue> Text;
+  std::map<unsigned, unsigned> mapPattern;
+  std::vector<TAnsVal> ans;
 
-  PatternParser(Pattern);
-  TextParser(Text);
+  PatternParser(Pattern, mapPattern);
+  try {
+    TextParser(Text);
+  }
+  catch (const std::invalid_argument &er) {
+    std::terminate();
+  }
 
+
+  ans = TBM(Pattern, Text, mapPattern);
+
+  for (auto i : ans) {
+    std::cout << i << std::endl;
+  }
 
   return 0;
 }
