@@ -152,6 +152,7 @@ const int MAX_LEN = 257;
 
 //-----------Patricia-------------
 
+
   template<class T>
   struct TPatricia {
     TNode<T> *root;
@@ -202,7 +203,7 @@ const int MAX_LEN = 257;
 
     bool Insert(T *key, unsigned long long value);
 
-    bool Delete(T *k);
+    bool Erase(T *k);
 
     void Save(std::ofstream &file);
 
@@ -260,7 +261,7 @@ bool TPatricia<T>::Insert(T *key, unsigned long long value) {
 }
 
 template<class T>
-bool TPatricia<T>::Delete(T *k) {
+bool TPatricia<T>::Erase(T *k) {
   TNode<T>
           *p,
           *t,
@@ -449,7 +450,7 @@ int main() {
       std::cin >> input;
       LowerCase(input);
 
-      std::cout << (patric->Delete(input) ? "OK" : "NoSuchWord");
+      std::cout << (patric->Erase(input) ? "OK" : "NoSuchWord");
       std::cout << '\n';
     }
     else if (!std::strcmp(input, "!")) {
