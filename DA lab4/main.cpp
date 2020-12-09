@@ -9,6 +9,7 @@
 const int SIZE = 11;
 const int SKIP_ALL = -10;
 const int UNDEFINED = -5;
+const unsigned BEGIN = 4294967294;
 
 struct TValue {
   unsigned val;
@@ -60,7 +61,7 @@ private:
     c = getchar();
     //нужно для вставки
     int count = 0;
-    unsigned id = 0;
+    unsigned id = 1;
     bool spaceFlag = false;
     while (c != '\n') {
       if (c == ' ' && spaceFlag) {
@@ -158,7 +159,7 @@ private:
     int L = 0, R = 0;
 
 
-    for (int i = 1; i < size; ++i) {
+    for (int i = 2; i < size; ++i) {
       if (i < R && i >= L) {
         int min = std::min(R - i, z[i - L]);
         if (min == R - i) {
@@ -188,6 +189,8 @@ private:
 
 public:
   TTBM() {
+    Pattern.push_back(BEGIN);
+    text.push_back({BEGIN, 0, 0});
     PatternParser();
     TextParser();
     std::vector<unsigned> revPat = Pattern;
@@ -201,7 +204,7 @@ public:
 
     arrGsN = z;
 
-    M.resize(text.size(), UNDEFINED);
+    M.resize(text.size() + 1, UNDEFINED);
 
   }
 
@@ -222,7 +225,7 @@ public:
 
     int alpha = size - patterPos;
 
-    for (int i = size; i < 0; --i) {
+    for (int i = size; i < 1; --i) {
       if (arrGsN[i - 1] == alpha && i - 1 < patterPos) {
         return i - 1;
       }
@@ -236,7 +239,7 @@ public:
       return ans;
     }
 
-    int i = 0;
+    int i = 1;
 
     const int m = Pattern.size();
     const int n = text.size();
@@ -248,18 +251,18 @@ public:
 
     int shift = m - 1;
 
-    while (i <= n - m) {
+    while (i <= n - m + 1) {
       int j = m - 1;
 
-      while (j >= 0) {
-        if (M[i + j] == UNDEFINED || (M[i + j] == arrGsN[j] && arrGsN[j] == 0)) {
-          if (Pattern[j] == text[i + j]) {
-            if (j <= 0) {
+      while (j >= 1) {
+        if (M[i + j - 1] == UNDEFINED || (M[i + j - 1] == arrGsN[j] && arrGsN[j] == 0)) {
+          if (Pattern[j] == text[i + j - 1]) {
+            if (j <= 1) {
               M[i + m - 1] = m - 1;
               ans.push_back({text[i].lineCount, text[i].wordCount});
 //              std::cout << "im doing push" << std::endl;
               shift = m - 1;
-              j = 1;
+              j = 2;
 
               break;
             }
@@ -272,26 +275,29 @@ public:
             M[i + m - 1] = m - 1 - j;
             int bmGs = RoolGoodSuff(j);
             int bmBc = RoolBadChar(j);
+            if (bmBc == SKIP_ALL || bmGs == SKIP_ALL) {
+              bmBc = m - 1 - j;
+            }
             shift = std::max(bmGs, std::max(bmBc, 1));
 
             break;
           }
         }//1 вариант
 
-        else if (M[i + j] < arrGsN[j]) {
-          j -= M[i + j];
-          if (j <= 0) {
+        else if (M[i + j - 1] < arrGsN[j]) {
+          j -= M[i + j - 1];
+          if (j <= 1) {
             ans.push_back({text[i].lineCount, text[i].wordCount});
 //            std::cout << "im doing push" << std::endl;
             shift = m - 1;
-            j = 1;
+            j = 2;
 
             break;
           }
 
         }//2 вариант
 
-        else if (M[i + j] >= arrGsN[j] && arrGsN[j] == j) {
+        else if (M[i + j - 1] >= arrGsN[j] && arrGsN[j] == j - 1) {
           M[i + m - 1] = m - 1 - j;
           ans.push_back({text[i].lineCount, text[i].wordCount});
 //          std::cout << "im doing push" << std::endl;
@@ -301,31 +307,31 @@ public:
             bmBc = m - 1 - j;
           }
           shift = std::max(bmGs, std::max(bmBc, 1));
-          j = 1;
+          j = 2;
 
           break;
         }//3 вариант
 
-        else if (M[i + j] > arrGsN[j] && arrGsN[j] < j) {
-          M[i + j] = m - 1 - j + arrGsN[j];
+        else if (M[i + j - 1] > arrGsN[j] && arrGsN[j] < j - 1) {
+          M[i + j - 1] = m - 1 - j + arrGsN[j];
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
           if (bmBc == SKIP_ALL) {
             bmBc = m - 1 - j;
           }
           shift = std::max(bmGs, std::max(bmBc, 1));
-          j = 1;
+          j = 2;
 
           break;
         }//4 вариант
 
-        else if (M[i + j] == arrGsN[j] && arrGsN[j] > 0 && arrGsN[j] < j) {
-          j -= M[i + j];
-          if (j <= 0) {
+        else if (M[i + j - 1] == arrGsN[j] && arrGsN[j] > 0 && arrGsN[j] < j - 1) {
+          j -= M[i + j - 1];
+          if (j <= 1) {
             ans.push_back({text[i].lineCount, text[i].wordCount});
 //            std::cout << "im doing push" << std::endl;
             shift = m - 1;
-            j = 1;
+            j = 2;
 
             break;
           }
@@ -343,7 +349,7 @@ public:
         }
       }
 
-      if (j <= 0) {
+      if (j <= 1) {
         ans.push_back({text[i].lineCount, text[i].wordCount});
 //        std::cout << "im doing push" << std::endl;
       }
@@ -368,3 +374,244 @@ int main() {
 
   return 0;
 }
+
+/*
+ 11
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+11 11 11
+ */
