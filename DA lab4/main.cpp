@@ -9,6 +9,8 @@
 
 //#define DEBUG
 
+const int SKIP_ALL = -10;
+const int UNDEFINED = -5;
 
 struct TValue {
   unsigned int val;
@@ -25,14 +27,22 @@ bool operator==(const unsigned lhs, const TValue &rhs) {
   return lhs == rhs.val;
 }
 
-class TBM {
+std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
+  out << obj.lineCount << ", " << obj.wordCount;
+  return out;
+}
+
+
+class TTBM {
 private:
   std::map<unsigned, std::vector<int>> rightIdPattern;
   std::vector<unsigned> Pattern;
   std::vector<TValue> text;
   std::set<unsigned> ALPHABET;
+  std::vector<int> arrGsN;
+  std::vector<int> M;
+  std::vector<int> N;
 
-public:
 //мапка нужна для того, чтобы в массиве table сопостовлять алфавит с индексами
   void PatternParser() {
     char c;
@@ -78,7 +88,6 @@ public:
       str.clear();
     }
   }
-
 
   void TextParser() {
     char c;
@@ -131,29 +140,12 @@ public:
   }
 
 
-
-  int RoolBadChar(int patternPos) {
-    auto search = rightIdPattern.find(Pattern[patternPos]);
-    if(search != rightIdPattern.end()){
-      auto elem = std::lower_bound(search->second.begin(),search->second.end(), patternPos);
-      if(elem == search->second.end()){
-        return -1;
-      }
-      return patternPos - (*elem);
-    }
-    return -1;
-  }
-
-  int RoolGoodSuff(int patterPos) {
-
-  }
-
   static std::vector<int> Z(std::vector<unsigned> pat) {
     int size = pat.size();
     std::vector<int> z(size);
     int L = 0, R = 0;
 
-    //наивный
+
     for (int i = 1; i < size; ++i) {
       if (i < R && i >= L) {
         int min = std::min(R - i, z[i - L]);
@@ -178,16 +170,118 @@ public:
       }
     }
 
-
     return z;
   }
 
-};
 
-std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
-  out << obj.lineCount << ", " << obj.wordCount;
-  return out;
-}
+public:
+  TTBM() {
+    PatternParser();
+    TextParser();
+    int size = Pattern.size();
+    std::vector<unsigned> revPat = Pattern;
+
+    std::reverse(revPat.begin(), revPat.end());
+
+    std::vector<int> z;
+    z = Z(revPat);
+
+    std::reverse(z.begin(), z.end());
+
+    arrGsN = z;
+
+    M.resize(text.size(), UNDEFINED);
+
+  }
+
+  int RoolBadChar(int patternPos) {
+    auto search = rightIdPattern.find(Pattern[patternPos]);
+    if (search != rightIdPattern.end()) {
+      auto elem = std::lower_bound(search->second.begin(), search->second.end(), patternPos);
+      if (elem == search->second.end()) {
+        return SKIP_ALL;
+      }
+      return patternPos - (*elem);
+    }
+    return SKIP_ALL;
+  }
+
+  int RoolGoodSuff(int patterPos) {
+    int size = Pattern.size();
+
+    int alpha = size - patterPos;
+
+    for (int i = size; i < 0; --i) {
+      if (arrGsN[i - 1] == alpha && i - 1 < patterPos) {
+        return i - 1;
+      }
+    }
+    return SKIP_ALL;
+  }
+
+  std::vector<TAnsVal> Do() {
+    std::vector<TAnsVal> ans;
+    if (Pattern.size() == 0) {
+      return ans;
+    }
+
+    int i = 0;
+    int u = 0;
+
+    //если текст меньше шаблона
+    if (i > text.size()) {
+      return ans;
+    }
+
+    int curI = i;
+    int curJ = j;
+
+    int shift = j;
+    while (i < text.size()) {
+
+      if (M[curI] == UNDEFINED || (M[curI] == 0 && arrGsN[curJ] == M[curI])) {
+        if (Pattern[curJ] == text[curI]) {
+          if (curJ == 0) {
+            ans.push_back({text[curI].lineCount, text[curI].wordCount});
+            M[i] = Pattern.size() - 1;
+            i += std::min((int) (i + shift), (int) (text.size() - shift));
+            curJ = j;
+            curI = i;
+          }
+          else {
+            --curI;
+            --curJ;
+          }//curJ == 0
+        }
+
+        else {
+          M[i] = i - curI;
+          int bmBc = RoolBadChar(curJ);
+          int bmGs = RoolGoodSuff(curJ);
+
+          if (bmBc == SKIP_ALL && bmGs == SKIP_ALL) {
+            shift = j;
+            i += std::min((int) (i + shift), (int) (text.size() - shift));
+            curI = i;
+            curJ = j;
+            continue;
+          }
+
+          shift = std::max(bmGs + 1, std::max(bmBc, 1));
+          i += std::min((int) (i + shift), (int) (text.size() - shift));
+          curI = i;
+          curJ = j;
+          continue;
+
+        }//Pattern[curJ] == text[curI]
+      }
+
+      else if () {
+
+      }//1 вариант
+    }
+  }
+};
 
 
 int main() {
@@ -205,7 +299,7 @@ int main() {
   }
 
 
-  ans = TBM(Pattern, Text, mapPattern);
+  ans = TTBM(Pattern, Text, mapPattern);
 
   for (auto i : ans) {
     std::cout << i << std::endl;
