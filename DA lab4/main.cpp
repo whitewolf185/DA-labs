@@ -5,10 +5,10 @@
 #include <map>
 #include <exception>
 #include <set>
+#include <list>
 
 //#define DEBUG
 
-std::set<unsigned> ALPHABET;
 
 struct TValue {
   unsigned int val;
@@ -21,101 +21,134 @@ struct TAnsVal {
   unsigned wordCount;
 };
 
+bool operator==(const unsigned lhs, const TValue &rhs) {
+  return lhs == rhs.val;
+}
+
+class TBM {
+private:
+  std::map<unsigned, std::vector<int>> rightIdPattern;
+  std::vector<unsigned> Pattern;
+  std::vector<TValue> text;
+  std::set<unsigned> ALPHABET;
+
+public:
 //мапка нужна для того, чтобы в массиве table сопостовлять алфавит с индексами
-void PatternParser(std::vector<unsigned> &Pattern, std::map<unsigned, unsigned> &mapPattern) {
-  char c;
-  std::string str;
-  c = getchar();
-  unsigned id = 1;
-  bool spaceFlag = false;
-  while (c != '\n') {
-    if (c == ' ' && spaceFlag) {
+  void PatternParser() {
+    char c;
+    std::string str;
+    c = getchar();
+    unsigned id = 0;
+    bool spaceFlag = false;
+    while (c != '\n') {
+      if (c == ' ' && spaceFlag) {
+        unsigned doomGuy = std::stoi(str);
+        Pattern.push_back(doomGuy);
+        auto search = rightIdPattern.find(doomGuy);
+        if (search != rightIdPattern.end()) {
+          search->second.push_back(id);
+        }
+        else {
+          rightIdPattern.insert({doomGuy, std::vector<int>(id)});
+        }
+        ++id;
+        ALPHABET.insert(doomGuy);
+        spaceFlag = false;
+        str.clear();
+      }
+      else {
+        str.push_back(c);
+        spaceFlag = true;
+      }
+      c = getchar();
+    }
+    if (spaceFlag) {
       unsigned doomGuy = std::stoi(str);
       Pattern.push_back(doomGuy);
-      mapPattern.insert({doomGuy, id});
+      auto search = rightIdPattern.find(doomGuy);
+      if (search != rightIdPattern.end()) {
+        search->second.push_back(id);
+      }
+      else {
+        rightIdPattern.insert({doomGuy, std::vector<int>(id)});
+      }
       ++id;
       ALPHABET.insert(doomGuy);
       spaceFlag = false;
       str.clear();
     }
-    else {
-      str.push_back(c);
-      spaceFlag = true;
-    }
-    c = getchar();
   }
-  if (spaceFlag) {
-    unsigned doomGuy = std::stoi(str);
-    Pattern.push_back(doomGuy);
-    mapPattern.insert({doomGuy, id});
-    ++id;
-    ALPHABET.insert(doomGuy);
-    spaceFlag = false;
-    str.clear();
-  }
-}
 
 
-void TextParser(std::vector<TValue> &text) {
-  char c;
-  unsigned lineCount = 1;
-  unsigned wordCount = 0;
-  std::string str;
-  bool spaceFlag = false;
+  void TextParser() {
+    char c;
+    unsigned lineCount = 1;
+    unsigned wordCount = 0;
+    std::string str;
+    bool spaceFlag = false;
 
-  while ((c = getchar()) != EOF) {
-    if (c == ' ' && spaceFlag) {
-      ++wordCount;
-      unsigned doomGuy;
-      doomGuy = std::stoi(str);
-      text.push_back({doomGuy, lineCount, wordCount});
-      ALPHABET.insert(doomGuy);
-      str.clear();
-      spaceFlag = false;
-    }
-    else if (c == '\n') {
-      ++lineCount;
-      wordCount = 0;
-      if (spaceFlag) {
+    while ((c = getchar()) != EOF) {
+      if (c == ' ' && spaceFlag) {
         ++wordCount;
         unsigned doomGuy;
         doomGuy = std::stoi(str);
         text.push_back({doomGuy, lineCount, wordCount});
         ALPHABET.insert(doomGuy);
         str.clear();
+        spaceFlag = false;
       }
-      spaceFlag = false;
-    }
+      else if (c == '\n') {
+        ++lineCount;
+        wordCount = 0;
+        if (spaceFlag) {
+          ++wordCount;
+          unsigned doomGuy;
+          doomGuy = std::stoi(str);
+          text.push_back({doomGuy, lineCount, wordCount});
+          ALPHABET.insert(doomGuy);
+          str.clear();
+        }
+        spaceFlag = false;
+      }
 
-    else if (c >= '0' && c <= '9') {
-      str.push_back(c);
-      spaceFlag = true;
-    }
+      else if (c >= '0' && c <= '9') {
+        str.push_back(c);
+        spaceFlag = true;
+      }
 
-    else if (c != ' ') {
-      throw std::invalid_argument("Wrong argument. Check your input\n");
+      else if (c != ' ') {
+        throw std::invalid_argument("Wrong argument. Check your input\n");
+      }
+    }
+    if (spaceFlag) {
+      ++wordCount;
+      unsigned doomGuy;
+      doomGuy = std::stoi(str);
+      text.push_back({doomGuy, lineCount, wordCount});
+      ALPHABET.insert(doomGuy);
+      str.clear();
     }
   }
-  if (spaceFlag) {
-    ++wordCount;
-    unsigned doomGuy;
-    doomGuy = std::stoi(str);
-    text.push_back({doomGuy, lineCount, wordCount});
-    ALPHABET.insert(doomGuy);
-    str.clear();
+
+
+
+  int RoolBadChar(int patternPos) {
+    auto search = rightIdPattern.find(Pattern[patternPos]);
+    if(search != rightIdPattern.end()){
+      auto elem = std::lower_bound(search->second.begin(),search->second.end(), patternPos);
+      if(elem == search->second.end()){
+        return -1;
+      }
+      return patternPos - (*elem);
+    }
+    return -1;
   }
-}
 
+  int RoolGoodSuff(int patterPos){
 
-bool operator==(const unsigned lhs, const TValue &rhs) {
-  return lhs == rhs.val;
-}
+  }
 
-
-std::vector<TAnsVal> TBM(const std::vector<unsigned> &Pattern, const std::vector<TValue> &Text,
-                         const std::map<unsigned, unsigned> &mapPattern) {
-
-}
+};
 
 std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
   out << obj.lineCount << ", " << obj.wordCount;
@@ -126,7 +159,7 @@ std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
 int main() {
   std::vector<unsigned> Pattern;
   std::vector<TValue> Text;
-  std::map<unsigned, unsigned> mapPattern;
+  std::map<unsigned, std::list<int>> mapPattern;
   std::vector<TAnsVal> ans;
 
   PatternParser(Pattern, mapPattern);

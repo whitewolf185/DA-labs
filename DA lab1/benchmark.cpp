@@ -50,7 +50,7 @@ void CountingSort(NVector::TVector<TPair> &data, const unsigned int &maxNum) {
 }
 
 
-bool operator<(TPair lhs, TPair rhs) {
+bool operator<(const TPair& lhs, const TPair& rhs) {
   return lhs.key < rhs.key;
 }
 
