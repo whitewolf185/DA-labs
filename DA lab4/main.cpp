@@ -2,7 +2,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <exception>
 #include <set>
 #include <list>
@@ -13,7 +13,7 @@ const int SKIP_ALL = -10;
 const int UNDEFINED = -5;
 
 struct TValue {
-  unsigned int val;
+  unsigned val;
   unsigned int lineCount;
   unsigned int wordCount;
 };
@@ -22,6 +22,7 @@ struct TAnsVal {
   unsigned lineCount;
   unsigned wordCount;
 };
+
 
 bool operator==(const unsigned lhs, const TValue &rhs) {
   return lhs == rhs.val;
@@ -35,7 +36,7 @@ std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
 
 class TTBM {
 private:
-  std::map<unsigned, std::vector<int>> rightIdPattern;
+  std::unordered_map<unsigned, std::vector<int>> rightIdPattern;
   std::vector<unsigned> Pattern;
   std::vector<TValue> text;
   std::vector<int> arrGsN;
@@ -58,18 +59,20 @@ private:
           search->second.push_back(id);
         }
         else {
-          rightIdPattern.insert({doomGuy, std::vector<int>(id)});
+          rightIdPattern.insert({doomGuy, std::vector<int>(1, id)});
         }
         ++id;
         spaceFlag = false;
         str.clear();
       }
-      else {
+      else if (c >= '0' && c <= '9') {
         str.push_back(c);
         spaceFlag = true;
       }
       c = getchar();
     }
+
+
     if (spaceFlag) {
       unsigned doomGuy = std::stoi(str);
       Pattern.push_back(doomGuy);
@@ -78,10 +81,9 @@ private:
         search->second.push_back(id);
       }
       else {
-        rightIdPattern.insert({doomGuy, std::vector<int>(id)});
+        rightIdPattern.insert({doomGuy, std::vector<int>(1, id)});
       }
       ++id;
-      spaceFlag = false;
       str.clear();
     }
   }
@@ -120,9 +122,9 @@ private:
         spaceFlag = true;
       }
 
-      else if (c != ' ') {
+      /*else if (c != ' ') {
         throw std::invalid_argument("Wrong argument. Check your input\n");
-      }
+      }*/
     }
     if (spaceFlag) {
       ++wordCount;
@@ -239,7 +241,10 @@ public:
             if (j <= 0) {
               M[i + m - 1] = m - 1;
               ans.push_back({text[i].lineCount, text[i].wordCount});
+//              std::cout << "im doing push" << std::endl;
               shift = m - 1;
+              j = 1;
+
               break;
             }
             else {
@@ -252,6 +257,8 @@ public:
             int bmGs = RoolGoodSuff(j);
             int bmBc = RoolBadChar(j);
             shift = std::max(bmGs, std::max(bmBc, 1));
+
+
             break;
           }
         }//1 вариант
@@ -260,7 +267,9 @@ public:
           j -= M[i + j];
           if (j <= 0) {
             ans.push_back({text[i].lineCount, text[i].wordCount});
+//            std::cout << "im doing push" << std::endl;
             shift = m - 1;
+            j = 1;
 
             break;
           }
@@ -269,9 +278,11 @@ public:
         else if (M[i + j] >= arrGsN[j] && arrGsN[j] == j) {
           M[i + m - 1] = m - 1 - j;
           ans.push_back({text[i].lineCount, text[i].wordCount});
+//          std::cout << "im doing push" << std::endl;
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
           shift = std::max(bmGs, std::max(bmBc, 1));
+          j = 1;
 
           break;
         }//3 вариант
@@ -281,6 +292,7 @@ public:
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
           shift = std::max(bmGs, std::max(bmBc, 1));
+          j = 1;
 
           break;
         }//4 вариант
@@ -289,16 +301,26 @@ public:
           j -= M[i + j];
           if (j <= 0) {
             ans.push_back({text[i].lineCount, text[i].wordCount});
+//            std::cout << "im doing push" << std::endl;
             shift = m - 1;
+            j = 1;
 
             break;
           }
         }//5 вариант
 
         else {
-          std::cout << "Some goes wrong" << std::endl;
+          int bmGs = RoolGoodSuff(j);
+          int bmBc = RoolBadChar(j);
+          shift = std::max(bmGs, std::max(bmBc, 1));
+
           break;
         }
+      }
+
+      if (j <= 0) {
+        ans.push_back({text[i].lineCount, text[i].wordCount});
+//        std::cout << "im doing push" << std::endl;
       }
 
       i += shift;
@@ -314,9 +336,6 @@ int main() {
 
   ans = tbm.Do();
 
-  if (ans.empty()) {
-    std::cout << "Im empty" << std::endl;
-  }
 
   for (auto i : ans) {
     std::cout << i << std::endl;
