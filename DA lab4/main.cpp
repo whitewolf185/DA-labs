@@ -1,14 +1,12 @@
 #include <iostream>
-#include <string>
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
 #include <exception>
-#include <set>
-#include <list>
+#include <cstring>
 
 //#define DEBUG
-
+const int SIZE = 11;
 const int SKIP_ALL = -10;
 const int UNDEFINED = -5;
 
@@ -22,6 +20,7 @@ struct TAnsVal {
   unsigned lineCount;
   unsigned wordCount;
 };
+
 
 
 bool operator==(const unsigned lhs, const TValue &rhs) {
@@ -42,17 +41,30 @@ private:
   std::vector<int> arrGsN;
   std::vector<int> M;
   std::vector<int> N;
+  char str[SIZE];
+
+  unsigned StoI() {
+    unsigned result = 0;
+    int i = 0;
+    while (str[i]) {
+      result = result * 10 + str[i] - '0';
+      ++i;
+    }
+    return result;
+  }
 
 //мапка нужна для того, чтобы в массиве table сопостовлять алфавит с индексами
   void PatternParser() {
     char c;
-    std::string str;
+    memset(str, 0, SIZE);
     c = getchar();
+    //нужно для вставки
+    int count = 0;
     unsigned id = 0;
     bool spaceFlag = false;
     while (c != '\n') {
       if (c == ' ' && spaceFlag) {
-        unsigned doomGuy = std::stoi(str);
+        unsigned doomGuy = StoI();
         Pattern.push_back(doomGuy);
         auto search = rightIdPattern.find(doomGuy);
         if (search != rightIdPattern.end()) {
@@ -63,18 +75,20 @@ private:
         }
         ++id;
         spaceFlag = false;
-        str.clear();
+        count = 0;
+        memset(str, 0, SIZE);
       }
       else if (c >= '0' && c <= '9') {
-        str.push_back(c);
+        str[count] = c;
         spaceFlag = true;
+        ++count;
       }
       c = getchar();
     }
 
 
     if (spaceFlag) {
-      unsigned doomGuy = std::stoi(str);
+      unsigned doomGuy = StoI();
       Pattern.push_back(doomGuy);
       auto search = rightIdPattern.find(doomGuy);
       if (search != rightIdPattern.end()) {
@@ -84,7 +98,6 @@ private:
         rightIdPattern.insert({doomGuy, std::vector<int>(1, id)});
       }
       ++id;
-      str.clear();
     }
   }
 
@@ -92,25 +105,28 @@ private:
     char c;
     unsigned lineCount = 1;
     unsigned wordCount = 0;
-    std::string str;
+    memset(str, 0, SIZE);
+    int count = 0;
     bool spaceFlag = false;
 
     while ((c = getchar()) != EOF) {
       if (c == ' ' && spaceFlag) {
         ++wordCount;
         unsigned doomGuy;
-        doomGuy = std::stoi(str);
+        doomGuy = StoI();
         text.push_back({doomGuy, lineCount, wordCount});
-        str.clear();
+        count = 0;
+        memset(str, 0, SIZE);
         spaceFlag = false;
       }
       else if (c == '\n') {
         if (spaceFlag) {
           ++wordCount;
           unsigned doomGuy;
-          doomGuy = std::stoi(str);
+          doomGuy = StoI();
           text.push_back({doomGuy, lineCount, wordCount});
-          str.clear();
+          count = 0;
+          memset(str, 0, SIZE);
         }
         wordCount = 0;
         ++lineCount;
@@ -118,8 +134,9 @@ private:
       }
 
       else if (c >= '0' && c <= '9') {
-        str.push_back(c);
+        str[count] = c;
         spaceFlag = true;
+        ++count;
       }
 
       /*else if (c != ' ') {
@@ -129,9 +146,8 @@ private:
     if (spaceFlag) {
       ++wordCount;
       unsigned doomGuy;
-      doomGuy = std::stoi(str);
+      doomGuy = StoI();
       text.push_back({doomGuy, lineCount, wordCount});
-      str.clear();
     }
   }
 
@@ -258,7 +274,6 @@ public:
             int bmBc = RoolBadChar(j);
             shift = std::max(bmGs, std::max(bmBc, 1));
 
-
             break;
           }
         }//1 вариант
@@ -273,6 +288,7 @@ public:
 
             break;
           }
+
         }//2 вариант
 
         else if (M[i + j] >= arrGsN[j] && arrGsN[j] == j) {
@@ -281,6 +297,9 @@ public:
 //          std::cout << "im doing push" << std::endl;
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
+          if (bmBc == SKIP_ALL) {
+            bmBc = m - 1 - j;
+          }
           shift = std::max(bmGs, std::max(bmBc, 1));
           j = 1;
 
@@ -291,6 +310,9 @@ public:
           M[i + j] = m - 1 - j + arrGsN[j];
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
+          if (bmBc == SKIP_ALL) {
+            bmBc = m - 1 - j;
+          }
           shift = std::max(bmGs, std::max(bmBc, 1));
           j = 1;
 
@@ -312,6 +334,9 @@ public:
         else {
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
+          if (bmBc == SKIP_ALL) {
+            bmBc = m - 1 - j;
+          }
           shift = std::max(bmGs, std::max(bmBc, 1));
 
           break;
