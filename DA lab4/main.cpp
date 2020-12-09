@@ -144,8 +144,42 @@ public:
     return -1;
   }
 
-  int RoolGoodSuff(int patterPos){
+  int RoolGoodSuff(int patterPos) {
 
+  }
+
+  static std::vector<int> Z(std::vector<unsigned> pat) {
+    int size = pat.size();
+    std::vector<int> z(size);
+    int L = 0, R = 0;
+
+    //наивный
+    for (int i = 1; i < size; ++i) {
+      if (i < R && i >= L) {
+        int min = std::min(R - i, z[i - L]);
+        if (min == R - i) {
+
+          //наивный
+          for (int j = R; pat[j] == pat[j - R] && j < size; ++j) {
+            ++min;
+          }
+        }
+        z[i] = min;
+      }
+
+      else {
+        L = i;
+        R = L + z[i];
+
+        //наивный
+        while (i + z[i] < size && pat[z[i]] == pat[i + z[i]]) {
+          ++z[i];
+        }
+      }
+    }
+
+
+    return z;
   }
 
 };
