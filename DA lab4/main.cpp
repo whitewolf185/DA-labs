@@ -41,7 +41,6 @@ private:
   std::vector<TValue> text;
   std::vector<int> arrGsN;
   std::vector<int> M;
-  std::vector<int> N;
   char str[SIZE];
 
   unsigned StoI() {
@@ -255,7 +254,7 @@ public:
       int j = m - 1;
 
       while (j >= 1) {
-        if (M[i + j - 1] == UNDEFINED || (M[i + j - 1] == arrGsN[j] && arrGsN[j] == 0)) {
+        if (M[i + j - 1] == UNDEFINED || (M[i + j - 1] == 0 && arrGsN[j] == M[i + j - 1])) {
           if (Pattern[j] == text[i + j - 1]) {
             if (j <= 1) {
               M[i + m - 1] = m - 1;
@@ -285,7 +284,7 @@ public:
         }//1 вариант
 
         else if (M[i + j - 1] < arrGsN[j]) {
-          j -= M[i + j - 1];
+          j -= arrGsN[j];
           if (j <= 1) {
             ans.push_back({text[i].lineCount, text[i].wordCount});
 //            std::cout << "im doing push" << std::endl;
@@ -303,7 +302,7 @@ public:
 //          std::cout << "im doing push" << std::endl;
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
-          if (bmBc == SKIP_ALL) {
+          if (bmBc == SKIP_ALL || bmGs == SKIP_ALL) {
             bmBc = m - 1 - j;
           }
           shift = std::max(bmGs, std::max(bmBc, 1));
@@ -316,7 +315,7 @@ public:
           M[i + j - 1] = m - 1 - j + arrGsN[j];
           int bmGs = RoolGoodSuff(j);
           int bmBc = RoolBadChar(j);
-          if (bmBc == SKIP_ALL) {
+          if (bmBc == SKIP_ALL || bmGs == SKIP_ALL) {
             bmBc = m - 1 - j;
           }
           shift = std::max(bmGs, std::max(bmBc, 1));

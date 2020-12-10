@@ -3,7 +3,7 @@
 #include <cstring>
 
 //подсчет количества символов в строке
-static unsigned int StrLen(const char *str) {
+unsigned int StrLen(const char *str) {
   return (*str) ? StrLen(++str) + 1 : 0;
 }
 
