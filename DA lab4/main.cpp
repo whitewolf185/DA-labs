@@ -6,10 +6,7 @@
 #include <cstring>
 
 //#define DEBUG
-const int SIZE = 11;
-const int SKIP_ALL = -10;
 const int UNDEFINED = -5;
-const unsigned BEGIN = 4294967294;
 
 struct TValue {
   unsigned val;
@@ -112,10 +109,6 @@ private:
         str.push_back(c);
         spaceFlag = true;
       }
-
-      /*else if (c != ' ') {
-        throw std::invalid_argument("Wrong argument. Check your input\n");
-      }*/
     }
     if (spaceFlag) {
       ++wordCount;
@@ -167,7 +160,7 @@ public:
     TextParser();
 
     RoolBadChar();
-    RooleGoodSuff();
+    RoolGoodSuff();
 
     M.resize(text.size() + 1, UNDEFINED);
 
@@ -179,7 +172,7 @@ public:
     }
   }
 
-  void RooleGoodSuff() {
+  void RoolGoodSuff() {
     int n = (int) Pattern.size();
     std::vector<unsigned int> revPat = Pattern;
     std::reverse(revPat.begin(), revPat.end());
@@ -242,8 +235,6 @@ public:
 
     for (int i = 0; i < 1 + n - m;) {
 
-      //j = (j == -1 )? m : j;
-
       if (M[i + j - 1] == UNDEFINED || (M[i + j - 1] == 0 && arrGsN[j] == M[i + j - 1])) {
         for (j = m - 1; j >= bound; j--) {
           if (Pattern[j] != text[i + j]) {
@@ -264,7 +255,6 @@ public:
           j = m;
         }
         else {
-//          std::cout << j - rightIdPattern[text[i + j].val] << std::endl;
           shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
           j = m;
         }
