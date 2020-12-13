@@ -23,9 +23,12 @@ struct TAnsVal {
 };
 
 
-
 bool operator==(const unsigned lhs, const TValue &rhs) {
   return lhs == rhs.val;
+}
+
+bool operator!=(const unsigned lhs, const TValue &rhs) {
+  return lhs != rhs.val;
 }
 
 std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
@@ -36,97 +39,69 @@ std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
 
 class TTBM {
 private:
-  std::unordered_map<unsigned, std::vector<int>> rightIdPattern;
+  std::unordered_map<unsigned, int> rightIdPattern;
   std::vector<unsigned> Pattern;
   std::vector<TValue> text;
   std::vector<int> arrGsN;
   std::vector<int> M;
-  char str[SIZE];
+  std::string str;
 
-  unsigned StoI() {
-    unsigned result = 0;
-    int i = 0;
-    while (str[i]) {
-      result = result * 10 + str[i] - '0';
-      ++i;
-    }
-    return result;
-  }
 
 //мапка нужна для того, чтобы в массиве table сопостовлять алфавит с индексами
   void PatternParser() {
+    str.clear();
     char c;
-    memset(str, 0, SIZE);
     c = getchar();
     //нужно для вставки
-    int count = 0;
     unsigned id = 1;
     bool spaceFlag = false;
-    while (c != '\n') {
+    while (c != '\n' && c != -1) {
       if (c == ' ' && spaceFlag) {
-        unsigned doomGuy = StoI();
+        unsigned doomGuy = std::stoul(str);
         Pattern.push_back(doomGuy);
-        auto search = rightIdPattern.find(doomGuy);
-        if (search != rightIdPattern.end()) {
-          search->second.push_back(id);
-        }
-        else {
-          rightIdPattern.insert({doomGuy, std::vector<int>(1, id)});
-        }
         ++id;
         spaceFlag = false;
-        count = 0;
-        memset(str, 0, SIZE);
+        str.clear();
       }
       else if (c >= '0' && c <= '9') {
-        str[count] = c;
+        str.push_back(c);
         spaceFlag = true;
-        ++count;
       }
       c = getchar();
     }
 
 
     if (spaceFlag) {
-      unsigned doomGuy = StoI();
+      unsigned doomGuy = std::stoul(str);
       Pattern.push_back(doomGuy);
-      auto search = rightIdPattern.find(doomGuy);
-      if (search != rightIdPattern.end()) {
-        search->second.push_back(id);
-      }
-      else {
-        rightIdPattern.insert({doomGuy, std::vector<int>(1, id)});
-      }
       ++id;
     }
   }
 
   void TextParser() {
+    str.clear();
     char c;
     unsigned lineCount = 1;
     unsigned wordCount = 0;
-    memset(str, 0, SIZE);
-    int count = 0;
+
     bool spaceFlag = false;
 
     while ((c = getchar()) != EOF) {
       if (c == ' ' && spaceFlag) {
         ++wordCount;
         unsigned doomGuy;
-        doomGuy = StoI();
+        doomGuy = std::stoul(str);
         text.push_back({doomGuy, lineCount, wordCount});
-        count = 0;
-        memset(str, 0, SIZE);
+        str.clear();
         spaceFlag = false;
       }
       else if (c == '\n') {
         if (spaceFlag) {
           ++wordCount;
           unsigned doomGuy;
-          doomGuy = StoI();
+          doomGuy = std::stoul(str);
           text.push_back({doomGuy, lineCount, wordCount});
-          count = 0;
-          memset(str, 0, SIZE);
+          str.clear();
         }
         wordCount = 0;
         ++lineCount;
@@ -134,9 +109,8 @@ private:
       }
 
       else if (c >= '0' && c <= '9') {
-        str[count] = c;
+        str.push_back(c);
         spaceFlag = true;
-        ++count;
       }
 
       /*else if (c != ' ') {
@@ -146,9 +120,10 @@ private:
     if (spaceFlag) {
       ++wordCount;
       unsigned doomGuy;
-      doomGuy = StoI();
+      doomGuy = std::stoul(str);
       text.push_back({doomGuy, lineCount, wordCount});
     }
+
   }
 
 
@@ -158,7 +133,7 @@ private:
     int L = 0, R = 0;
 
 
-    for (int i = 2; i < size; ++i) {
+    for (int i = 1; i < size; ++i) {
       if (i < R && i >= L) {
         int min = std::min(R - i, z[i - L]);
         if (min == R - i) {
@@ -188,170 +163,148 @@ private:
 
 public:
   TTBM() {
-    Pattern.push_back(BEGIN);
-    text.push_back({BEGIN, 0, 0});
     PatternParser();
     TextParser();
-    std::vector<unsigned> revPat = Pattern;
 
-    std::reverse(revPat.begin(), revPat.end());
-
-    std::vector<int> z;
-    z = Z(revPat);
-
-    std::reverse(z.begin(), z.end());
-
-    arrGsN = z;
+    RoolBadChar();
+    RooleGoodSuff();
 
     M.resize(text.size() + 1, UNDEFINED);
 
   }
 
-  int RoolBadChar(int patternPos) {
-    auto search = rightIdPattern.find(Pattern[patternPos]);
-    if (search != rightIdPattern.end()) {
-      auto elem = std::lower_bound(search->second.begin(), search->second.end(), patternPos);
-      if (elem == search->second.end()) {
-        return SKIP_ALL;
-      }
-      return patternPos - (*elem);
+  void RoolBadChar() {
+    for (int i = 0; i < (int) Pattern.size() - 1; ++i) {
+      rightIdPattern[Pattern[i]] = i;
     }
-    return SKIP_ALL;
   }
 
-  int RoolGoodSuff(int patterPos) {
-    int size = Pattern.size();
+  void RooleGoodSuff() {
+    int n = (int) Pattern.size();
+    std::vector<unsigned int> revPat = Pattern;
+    std::reverse(revPat.begin(), revPat.end());
+    std::vector<int> zFunc = Z(revPat);
 
-    int alpha = size - patterPos;
+    std::vector<int> N(zFunc.rbegin(), zFunc.rend());
 
-    for (int i = size; i < 1; --i) {
-      if (arrGsN[i - 1] == alpha && i - 1 < patterPos) {
-        return i - 1;
+    std::vector<int> L(n + 1, n);
+
+    int j;
+    for (int i = 0; i < n - 1; ++i) {
+      j = n - N[i];
+      L[j] = i;
+    }
+
+
+    std::vector<int> l(n + 1, n);
+    for (int i = n - 1; i >= 0; --i) {
+      j = n - i;
+      if (N[j - 1] == j) {
+        l[i] = (j - 1);
+      }
+      else {
+        l[i] = l[i + 1];
       }
     }
-    return SKIP_ALL;
+
+
+    for (int i = 0; i < n + 1; ++i) {
+      if (L[i] == n) {
+        L[i] = l[i];
+      }
+    }
+
+    for (auto &x : L) {
+      if (x != n) {
+        x = n - 1 - x;
+      }
+    }
+
+    arrGsN = L;
   }
+
 
   std::vector<TAnsVal> Do() {
     std::vector<TAnsVal> ans;
-    if (Pattern.size() == 0) {
+    if (Pattern.empty()) {
       return ans;
     }
-
-    int i = 1;
-
-    const int m = Pattern.size();
-    const int n = text.size();
 
     //если текст меньше шаблона
     if (Pattern.size() > text.size()) {
       return ans;
     }
 
-    int shift = m - 1;
+    const int m = Pattern.size();
+    const int n = text.size();
 
-    while (i <= n - m + 1) {
-      int j = m - 1;
+    int j = m, bound = 0, shift = 0;
 
-      while (j >= 1) {
-        if (M[i + j - 1] == UNDEFINED || (M[i + j - 1] == 0 && arrGsN[j] == M[i + j - 1])) {
-          if (Pattern[j] == text[i + j - 1]) {
-            if (j <= 1) {
-              M[i + m - 1] = m - 1;
-              ans.push_back({text[i].lineCount, text[i].wordCount});
-//              std::cout << "im doing push" << std::endl;
-              shift = m - 1;
-              j = 2;
+    for (int i = 0; i < 1 + n - m;) {
 
-              break;
-            }
-            else {
-              --j;
-            }
-          }
+      //j = (j == -1 )? m : j;
 
-          else {
+      if (M[i + j - 1] == UNDEFINED || (M[i + j - 1] == 0 && arrGsN[j] == M[i + j - 1])) {
+        for (j = m - 1; j >= bound; j--) {
+          if (Pattern[j] != text[i + j]) {
             M[i + m - 1] = m - 1 - j;
-            int bmGs = RoolGoodSuff(j);
-            int bmBc = RoolBadChar(j);
-            if (bmBc == SKIP_ALL || bmGs == SKIP_ALL) {
-              bmBc = m - 1 - j;
-            }
-            shift = std::max(bmGs, std::max(bmBc, 1));
-
             break;
           }
-        }//1 вариант
-
-        else if (M[i + j - 1] < arrGsN[j]) {
-          j -= arrGsN[j];
-          if (j <= 1) {
-            ans.push_back({text[i].lineCount, text[i].wordCount});
-//            std::cout << "im doing push" << std::endl;
-            shift = m - 1;
-            j = 2;
-
-            break;
-          }
-
-        }//2 вариант
-
-        else if (M[i + j - 1] >= arrGsN[j] && arrGsN[j] == j - 1) {
-          M[i + m - 1] = m - 1 - j;
-          ans.push_back({text[i].lineCount, text[i].wordCount});
-//          std::cout << "im doing push" << std::endl;
-          int bmGs = RoolGoodSuff(j);
-          int bmBc = RoolBadChar(j);
-          if (bmBc == SKIP_ALL || bmGs == SKIP_ALL) {
-            bmBc = m - 1 - j;
-          }
-          shift = std::max(bmGs, std::max(bmBc, 1));
-          j = 2;
-
-          break;
-        }//3 вариант
-
-        else if (M[i + j - 1] > arrGsN[j] && arrGsN[j] < j - 1) {
-          M[i + j - 1] = m - 1 - j + arrGsN[j];
-          int bmGs = RoolGoodSuff(j);
-          int bmBc = RoolBadChar(j);
-          if (bmBc == SKIP_ALL || bmGs == SKIP_ALL) {
-            bmBc = m - 1 - j;
-          }
-          shift = std::max(bmGs, std::max(bmBc, 1));
-          j = 2;
-
-          break;
-        }//4 вариант
-
-        else if (M[i + j - 1] == arrGsN[j] && arrGsN[j] > 0 && arrGsN[j] < j - 1) {
-          j -= M[i + j - 1];
-          if (j <= 1) {
-            ans.push_back({text[i].lineCount, text[i].wordCount});
-//            std::cout << "im doing push" << std::endl;
-            shift = m - 1;
-            j = 2;
-
-            break;
-          }
-        }//5 вариант
-
-        else {
-          int bmGs = RoolGoodSuff(j);
-          int bmBc = RoolBadChar(j);
-          if (bmBc == SKIP_ALL) {
-            bmBc = m - 1 - j;
-          }
-          shift = std::max(bmGs, std::max(bmBc, 1));
-
-          break;
         }
-      }
+        if (j < bound) {
+          ans.push_back({text[i].lineCount, text[i].wordCount});
+          bound = m - arrGsN[0];
+          j = -1;
+        }
+        else {
+          bound = 0;
+        }
+        if (j < bound) {
+          shift = arrGsN[j + 1];
+          j = m;
+        }
+        else {
+//          std::cout << j - rightIdPattern[text[i + j].val] << std::endl;
+          shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
+          j = m;
+        }
 
-      if (j <= 1) {
+      }//1 вариант
+
+      else if (M[i + j - 1] < arrGsN[j]) {
+        j -= M[i + j - 1];
+
+        if (j <= 0) {
+          ans.push_back({text[i].lineCount, text[i].wordCount});
+          bound = m - arrGsN[0];
+          shift = arrGsN[0];
+          j = m;
+        }
+      }//2 вариант
+
+      else if (M[i + j - 1] >= arrGsN[j] && arrGsN[j] == j) {
+        M[i + m - 1] = m - 1 - j;
         ans.push_back({text[i].lineCount, text[i].wordCount});
-//        std::cout << "im doing push" << std::endl;
-      }
+        shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
+        j = m;
+      }//3 вариант
+
+      else if (M[i + j - 1] > arrGsN[j] && arrGsN[j] < j) {
+        M[i + j - 1] = m - 1 - j + arrGsN[j];
+        shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
+        j = m;
+      }//4 вариант
+
+      else if (M[i + j - 1] == arrGsN[j] && arrGsN[j] > 0 && arrGsN[j] < j) {
+        j -= M[i + j - 1];
+
+        if (j <= 0) {
+          ans.push_back({text[i].lineCount, text[i].wordCount});
+          bound = m - arrGsN[0];
+          shift = arrGsN[0];
+          j = m;
+        }
+      }//5 вариант
 
       i += shift;
     }
@@ -373,244 +326,3 @@ int main() {
 
   return 0;
 }
-
-/*
- 11
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-11 11 11
- */
