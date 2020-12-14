@@ -13,8 +13,6 @@ add_executable(DA_lab2
 #add_executable(test_DA2 "DA lab2/string_test.cpp" "DA lab2/TString.cpp" "DA lab2/TString.h")
 
 add_executable(lab4 "DA lab4/main.cpp")
-add_executable(test_lab4 "DA lab4/test.cpp")
 
-
-add_executable(test_generator "DA lab4/test_generator.cpp")
-add_executable(testlab4 "DA lab4/testlab4.cpp")
+#add_executable(testmessage testmessage.cpp)
+add_executable(lab4_benchmark "DA lab4/benchmark.cpp")

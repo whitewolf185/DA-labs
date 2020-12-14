@@ -1,3 +1,5 @@
+#include <cstdio>
+#include <ctime>
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -31,6 +33,15 @@ std::ostream &operator<<(std::ostream &out, const TAnsVal obj) {
 }
 
 class TTBM {
+public:
+  std::vector<unsigned> getPattern() {
+    return Pattern;
+  }
+
+  std::vector<TValue> getText() {
+    return text;
+  }
+
 private:
   std::unordered_map<unsigned, int> rightIdPattern;
   std::vector<unsigned> Pattern;
@@ -39,12 +50,12 @@ private:
   std::vector<int> M;
   std::string str;
 
-//РјР°РїРєР° РЅСѓР¶РЅР° РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РІ РјР°СЃСЃРёРІРµ table СЃРѕРїРѕСЃС‚РѕРІР»СЏС‚СЊ Р°Р»С„Р°РІРёС‚ СЃ РёРЅРґРµРєСЃР°РјРё
+//мапка нужна для того, чтобы в массиве table сопостовлять алфавит с индексами
   void PatternParser() {
     str.clear();
     char c;
     c = getchar();
-    //РЅСѓР¶РЅРѕ РґР»СЏ РІСЃС‚Р°РІРєРё
+    //нужно для вставки
     unsigned id = 1;
     bool spaceFlag = false;
     while (c != '\n' && c != -1) {
@@ -119,7 +130,7 @@ private:
       if (i < R && i >= L) {
         int min = std::min(R - i, z[i - L]);
         if (min == R - i) {
-          //РЅР°РёРІРЅС‹Р№
+          //наивный
           for (int j = R; pat[j] == pat[j - R] && j < size; ++j) {
             ++min;
           }
@@ -130,7 +141,7 @@ private:
       else {
         L = i;
         R = L + z[i];
-        //РЅР°РёРІРЅС‹Р№
+        //наивный
         while (i + z[i] < size && pat[z[i]] == pat[i + z[i]]) {
           ++z[i];
         }
@@ -139,6 +150,7 @@ private:
 
     return z;
   }
+
 public:
   TTBM() {
     PatternParser();
@@ -204,7 +216,7 @@ public:
       return ans;
     }
 
-    //РµСЃР»Рё С‚РµРєСЃС‚ РјРµРЅСЊС€Рµ С€Р°Р±Р»РѕРЅР°
+    //если текст меньше шаблона
     if (Pattern.size() > text.size()) {
       return ans;
     }
@@ -238,7 +250,7 @@ public:
           j = m;
         }
 
-      }//1 РІР°СЂРёР°РЅС‚
+      }//1 вариант
 
       else if (M[i + j - 1] < arrGsN[j]) {
         j -= M[i + j - 1];
@@ -249,20 +261,20 @@ public:
           shift = arrGsN[0];
           j = m;
         }
-      }//2 РІР°СЂРёР°РЅС‚
+      }//2 вариант
 
       else if (M[i + j - 1] >= arrGsN[j] && arrGsN[j] == j) {
         M[i + m - 1] = m - 1 - j;
         ans.push_back({text[i].lineCount, text[i].wordCount});
         shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
         j = m;
-      }//3 РІР°СЂРёР°РЅС‚
+      }//3 вариант
 
       else if (M[i + j - 1] > arrGsN[j] && arrGsN[j] < j) {
         M[i + j - 1] = m - 1 - j + arrGsN[j];
         shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
         j = m;
-      }//4 РІР°СЂРёР°РЅС‚
+      }//4 вариант
 
       else if (M[i + j - 1] == arrGsN[j] && arrGsN[j] > 0 && arrGsN[j] < j) {
         j -= M[i + j - 1];
@@ -273,7 +285,7 @@ public:
           shift = arrGsN[0];
           j = m;
         }
-      }//5 РІР°СЂРёР°РЅС‚
+      }//5 вариант
 
       i += shift;
     }
@@ -281,13 +293,68 @@ public:
   }
 };
 
+class WeakSearch {
+public:
+  std::vector<unsigned> Pattern;
+  std::vector<TValue> Text;
+public:
+  void setPat(std::vector<unsigned> pattern) {
+    this->Pattern = std::move(pattern);
+  }
+
+  void setText(std::vector<TValue> text) {
+    this->Text = std::move(text);
+  }
+
+  std::vector<TAnsVal> find() {
+    std::vector<TAnsVal> ans;
+    unsigned m = Pattern.size(), n = Text.size();
+
+    for (int i = 0; i < n - m; ++i) {
+      bool is_ans = false;
+      for (int j = 0; j < m; ++j) {
+        if (Pattern[j] != Text[i + j]) {
+          is_ans = false;
+          break;
+        }
+        is_ans = true;
+      }
+      if (is_ans) {
+        ans.push_back({Text[i].lineCount, Text[i].wordCount});
+      }
+    }
+
+    return ans;
+  }
+};
 
 int main() {
-  TTBM tbm;
+  double start, end;
+  std::vector<TAnsVal> ansBm;
   std::vector<TAnsVal> ans;
-  ans = tbm.Do();
-  for (auto i : ans) {
-    std::cout << i << std::endl;
-  }
+  TTBM tbm;
+
+  start = clock();
+  ansBm = tbm.Do();
+  end = clock();
+  double ans_tbm = (end - start) / 1000.0;
+
+  WeakSearch ws;
+
+  ws.setPat(tbm.getPattern());
+  ws.setText(tbm.getText());
+
+  start = clock();
+  ans = ws.find();
+  end = clock();
+  double ans_ws = (end - start) / 1000.0;
+
+
+  std::cout << "Naive: " << ans_ws << " ms" << std::endl;
+  std::cout << "TBM: " << ans_tbm << " ms" << std::endl;
+  std::cout << "TBM anses " << ansBm.size() << std::endl
+            << "Naive anses " << ans.size() << std::endl;
+
+
   return 0;
 }

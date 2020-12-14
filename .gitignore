@@ -9,3 +9,4 @@ cmake-*/
 # Editor-based HTTP Client requests
 /httpRequests/
 /cmake-mingw/
+/venv/
