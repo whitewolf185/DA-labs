@@ -16,3 +16,4 @@ add_executable(lab4 "DA lab4/main.cpp")
 
 #add_executable(testmessage testmessage.cpp)
 add_executable(lab4_benchmark "DA lab4/benchmark.cpp")
+

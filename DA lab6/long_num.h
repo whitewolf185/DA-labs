@@ -11,7 +11,7 @@
 
 //#define DEBUG
 
-const int RADDIX = 4; //это у меня степень десятки
+const int RADDIX = 5; //это у меня степень десятки
 const int32_t BASE = pow(10, RADDIX);
 
 class TLongAlg {
@@ -233,10 +233,14 @@ public:
 
 
   //вывод
-  friend std::ostream &operator<<(std::ostream &out, const TLongAlg &obj) {
+  friend std::ostream &operator<<(std::ostream &out, TLongAlg &obj) {
     if (obj._data.empty()) {
       out << "0";
       return out;
+    }
+
+    while (obj._data.size() > 1 && obj._data.back() == 0) {
+      obj._data.pop_back();
     }
 
     out << obj._data.back();
