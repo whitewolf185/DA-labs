@@ -25,9 +25,9 @@ private:
     return result;
   }
 
-  static void ClearZeroes(TLongAlg &obj) {
-    while (obj._data.size() > 1 && obj._data.back() == 0) {
-      obj._data.pop_back();
+  void ClearZeroes() {
+    while (_data.size() > 1 && _data.back() == 0) {
+      _data.pop_back();
     }
   }
 
@@ -86,6 +86,7 @@ public:
       }
     }
 
+    result.ClearZeroes();
     return result;
   }
 
@@ -102,7 +103,6 @@ public:
 
     return lhs._data.size() > rhs._data.size();
   }
-
 
   //меньше
   friend bool operator<(const TLongAlg &lhs, const TLongAlg &rhs) {
@@ -142,11 +142,6 @@ public:
     TLongAlg result = lhs;
 
     for (size_t i = 0; i < rhs._data.size() || carry; ++i) {
-#ifdef DEBUG
-      if(result._data.size() == i){
-        throw std::invalid_argument("Error");
-      }
-#endif
       result._data[i] -= carry + (i < rhs._data.size() ? rhs._data[i] : 0);
       carry = result._data[i] < 0;
       if (carry) {
@@ -154,10 +149,7 @@ public:
       }
     }
 
-    while (result._data.size() > 1 && result._data.back() == 0) {
-      result._data.pop_back();
-    }
-
+    result.ClearZeroes();
     return result;
   }
 
@@ -175,10 +167,7 @@ public:
       }
     }
 
-    while (result._data.size() > 1 && result._data.back() == 0) {
-      result._data.pop_back();
-    }
-
+    result.ClearZeroes();
     return result;
   }
 
@@ -199,7 +188,7 @@ public:
       int64_t l = -1;
       int64_t r = BASE;
       peaceOfDigit._data.insert(peaceOfDigit._data.begin(), lhs._data[i]);
-      ClearZeroes(peaceOfDigit);
+      peaceOfDigit.ClearZeroes();
 
       while (l + 1 < r) {
         int64_t m = (l + r) / 2;
@@ -214,9 +203,7 @@ public:
 
     //концовочка
     std::reverse(result._data.begin(), result._data.end());
-    while (result._data.size() > 1 && result._data.back() == 0) {
-      result._data.pop_back();
-    }
+    result.ClearZeroes();
     return result;
   }
 
@@ -245,7 +232,7 @@ public:
       }
     }
 
-
+    result.ClearZeroes();
     return result;
   }
 
@@ -285,7 +272,7 @@ int main() {
         std::cout << res << std::endl;
       }
       catch (const std::invalid_argument &e) {
-        std::cout << "Error" << std::endl;
+        std::cout << e.what() << std::endl;
       }
     }
 
@@ -296,7 +283,7 @@ int main() {
         std::cout << res << std::endl;
       }
       catch (const std::invalid_argument &e) {
-        std::cout << "Error" << std::endl;
+        std::cout << e.what() << std::endl;
       }
     }
 
