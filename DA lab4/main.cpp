@@ -200,6 +200,7 @@ public:
 
   std::vector<TAnsVal> Do() {
     std::vector<TAnsVal> ans;
+    //если паттерн пустой, то мы и найти ничего не сможем
     if (Pattern.empty()) {
       return ans;
     }
@@ -214,7 +215,10 @@ public:
     int j = m, bound = 0, shift = 0;
 
     for (int i = 0; i < 1 + n - m;) {
+      //1 вариант
       if (M[i + j - 1] == UNDEFINED || (M[i + j - 1] == 0 && arrGsN[j] == M[i + j - 1])) {
+        //тут чистый БМ
+        //arrGsN - это массив сдвивов правила хорошего суффикса
         for (j = m - 1; j >= bound; j--) {
           if (Pattern[j] != text[i + j]) {
             M[i + m - 1] = m - 1 - j;
@@ -237,9 +241,9 @@ public:
           shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
           j = m;
         }
+      }
 
-      }//1 вариант
-
+        //2 вариан
       else if (M[i + j - 1] < arrGsN[j]) {
         j -= M[i + j - 1];
 
@@ -249,21 +253,24 @@ public:
           shift = arrGsN[0];
           j = m;
         }
-      }//2 вариант
+      }
 
+        //3 вариант
       else if (M[i + j - 1] >= arrGsN[j] && arrGsN[j] == j) {
         M[i + m - 1] = m - 1 - j;
         ans.push_back({text[i].lineCount, text[i].wordCount});
         shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
         j = m;
-      }//3 вариант
+      }
 
+        //4 вариант
       else if (M[i + j - 1] > arrGsN[j] && arrGsN[j] < j) {
         M[i + j - 1] = m - 1 - j + arrGsN[j];
         shift = std::max({1, arrGsN[j + 1], j - rightIdPattern[text[i + j].val]});
         j = m;
-      }//4 вариант
+      }
 
+        //5 вариант
       else if (M[i + j - 1] == arrGsN[j] && arrGsN[j] > 0 && arrGsN[j] < j) {
         j -= M[i + j - 1];
 
@@ -273,7 +280,7 @@ public:
           shift = arrGsN[0];
           j = m;
         }
-      }//5 вариант
+      }
 
       i += shift;
     }
