@@ -1,10 +1,13 @@
 #include "long_num.h"
+#include <ctime>
 
 int main() {
   std::string str1;
   std::string str2;
   char op;
+  clock_t start, end;
 
+  start = clock();
   while (std::cin >> str1 >> str2 >> op) {
     TLongAlg a(str1);
     TLongAlg b(str2);
@@ -14,10 +17,10 @@ int main() {
     if (op == '+') {
       try {
         res = a + b;
-        std::cout << res << std::endl;
+//        std::cout << res << std::endl;
       }
-      catch (std::invalid_argument e) {
-        std::cout << e.what() << std::endl;
+      catch (const std::invalid_argument &e) {
+//        std::cout << e.what() << std::endl;
       }
     }
 
@@ -25,57 +28,60 @@ int main() {
     if (op == '-') {
       try {
         res = a - b;
-        std::cout << res << std::endl;
+//        std::cout << res << std::endl;
       }
-      catch (std::invalid_argument e) {
-        std::cout << e.what() << std::endl;
+      catch (const std::invalid_argument &e) {
+//        std::cout << e.what() << std::endl;
       }
     }
 
     if (op == '*') {
       try {
         res = a * b;
-        std::cout << res << std::endl;
+//        std::cout << res << std::endl;
       }
-      catch (std::invalid_argument e) {
-        std::cout << e.what() << std::endl;
+      catch (const std::invalid_argument &e) {
+//        std::cout << e.what() << std::endl;
       }
     }
 
     if (op == '/') {
       try {
         res = a / b;
-        std::cout << res << std::endl;
+//        std::cout << res << std::endl;
       }
-      catch (std::invalid_argument e) {
-        std::cout << e.what() << std::endl;
+      catch (const std::invalid_argument &e) {
+//        std::cout << e.what() << std::endl;
       }
     }
 
     if (op == '^') {
       try {
         res = a ^ b;
-        std::cout << res << std::endl;
+//        std::cout << res << std::endl;
       }
-      catch (std::invalid_argument e) {
-        std::cout << e.what() << std::endl;
+      catch (const std::invalid_argument &e) {
+//        std::cout << e.what() << std::endl;
       }
     }
 
     if (op == '<') {
-      (a < b) ? std::cout << "true" << std::endl : std::cout << "false" << std::endl;
+//      (a < b) ? std::cout << "true" << std::endl : std::cout << "false" << std::endl;
     }
 
     if (op == '>') {
-      (a > b) ? std::cout << "true" << std::endl : std::cout << "false" << std::endl;
+//      (a > b) ? std::cout << "true" << std::endl : std::cout << "false" << std::endl;
     }
 
     if (op == '=') {
-      (a == b) ? std::cout << "true" << std::endl : std::cout << "false" << std::endl;
+//      (a == b) ? std::cout << "true" << std::endl : std::cout << "false" << std::endl;
     }
+
   }
+  end = clock();
 
 
+  std::cout << (end - start) / 1000.0 << " ms\n";
   return 0;
 }
 

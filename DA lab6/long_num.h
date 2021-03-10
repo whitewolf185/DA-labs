@@ -6,26 +6,32 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
-#include <exception>
 #include <iomanip>
 
 //#define DEBUG
 
 const int RADDIX = 5; //это у меня степень десятки
-const int32_t BASE = pow(10, RADDIX);
+const int64_t BASE = pow(10, RADDIX);
+
 
 class TLongAlg {
 private:
-  std::vector<int32_t> _data;
+  std::vector<int64_t> _data;
 
-  int32_t ConvertToInt(const std::string &str) {
-    int32_t result = 0;
+  int64_t ConvertToInt(const std::string &str) {
+    int64_t result = 0;
 
     for (int i = 0; i < str.size(); ++i) {
       result = result * 10 + str[i] - '0';
     }
 
     return result;
+  }
+
+  void ClearZeroes() {
+    while (_data.size() > 1 && _data.back() == 0) {
+      _data.pop_back();
+    }
   }
 
 public:
@@ -50,20 +56,24 @@ public:
     if (i == 0) {
       _data.push_back(ConvertToInt(str.substr(0, 1)));
     }
+
+    while (_data.size() > 1 && _data.back() == 0) {
+      _data.pop_back();
+    }
   }
 
-  TLongAlg(const int32_t &m) {
+  TLongAlg(const int64_t &m) {
     _data.push_back(m);
   }
 
-  std::vector<int32_t> ShowData() const {
+  std::vector<int64_t> ShowData() const {
     return _data;
   }
 
 
   //сложение
   friend TLongAlg operator+(const TLongAlg &lhs, const TLongAlg &rhs) {
-    int32_t carry = 0;
+    int64_t carry = 0;
     TLongAlg result = lhs;
 
     for (size_t i = 0; i < fmax(result._data.size(), rhs._data.size()) || carry; ++i) {
@@ -79,6 +89,7 @@ public:
       }
     }
 
+    result.ClearZeroes();
     return result;
   }
 
@@ -95,7 +106,6 @@ public:
 
     return lhs._data.size() > rhs._data.size();
   }
-
 
   //меньше
   friend bool operator<(const TLongAlg &lhs, const TLongAlg &rhs) {
@@ -131,10 +141,10 @@ public:
       throw std::invalid_argument("Error");
     }
 
-    int32_t carry = 0;
+    int64_t carry = 0;
     TLongAlg result = lhs;
 
-    for (size_t i = 0; i < lhs._data.size() || carry; ++i) {
+    for (size_t i = 0; i < rhs._data.size() || carry; ++i) {
       result._data[i] -= carry + (i < rhs._data.size() ? rhs._data[i] : 0);
       carry = result._data[i] < 0;
       if (carry) {
@@ -142,10 +152,7 @@ public:
       }
     }
 
-    while (result._data.size() > 1 && result._data.back() == 0) {
-      result._data.pop_back();
-    }
-
+    result.ClearZeroes();
     return result;
   }
 
@@ -156,17 +163,14 @@ public:
     result._data.resize(lhs._data.size() + rhs._data.size(), 0);
 
     for (int i = 0; i < rhs._data.size(); ++i) {
-      for (int32_t carry = 0, j = 0; j < lhs._data.size() || carry; ++j) {
-        int32_t current = result._data[i + j] + rhs._data[i] * 1ll * (j < lhs._data.size() ? lhs._data[j] : 0) + carry;
+      for (int64_t carry = 0, j = 0; j < lhs._data.size() || carry; ++j) {
+        int64_t current = result._data[i + j] + rhs._data[i] * 1ll * (j < lhs._data.size() ? lhs._data[j] : 0) + carry;
         result._data[i + j] = current % BASE;
         carry = current / BASE;
       }
     }
 
-    while (result._data.size() > 1 && result._data.back() == 0) {
-      result._data.pop_back();
-    }
-
+    result.ClearZeroes();
     return result;
   }
 
@@ -175,59 +179,55 @@ public:
     TLongAlg result;
     TLongAlg peaceOfDigit;
 
+    if (rhs == TLongAlg("0")) {
+      throw std::invalid_argument("Error");
+    }
+
     if (lhs < rhs) {
       return TLongAlg("0");
     }
 
     for (int i = lhs._data.size() - 1; i >= 0; --i) {
-      int32_t l = -1;
-      int32_t r = BASE;
+      int64_t l = -1;
+      int64_t r = BASE;
       peaceOfDigit._data.insert(peaceOfDigit._data.begin(), lhs._data[i]);
+      peaceOfDigit.ClearZeroes();
 
       while (l + 1 < r) {
-        int32_t m = (l + r) / 2;
+        int64_t m = (l + r) / 2;
         auto tmp = rhs * TLongAlg(m);
         (!(peaceOfDigit < rhs * TLongAlg(m))) ? l = m : r = m;
       }
 
       result._data.push_back(l);
+      auto tmp = rhs * TLongAlg(l);
       peaceOfDigit = peaceOfDigit - TLongAlg(l) * rhs;
     }
 
     //концовочка
     std::reverse(result._data.begin(), result._data.end());
-    while (result._data.size() > 1 && result._data.back() == 0) {
-      result._data.pop_back();
-    }
+    result.ClearZeroes();
     return result;
   }
 
   //возведение в степень
   friend TLongAlg operator^(const TLongAlg &lhs, TLongAlg rhs) {
-    TLongAlg result = TLongAlg("1");
-    if (lhs._data.size() == 1 && lhs._data[0] == 0 && rhs._data.size() == 1 && rhs._data[0] == 0) {
+    TLongAlg result("1");
+    if (lhs == TLongAlg("0") && rhs == TLongAlg("0")) {
       throw std::invalid_argument("Error");
-    }
-    if (lhs._data.size() == 1 && lhs._data[0] == 0) {
-      return TLongAlg("0");
-    }
-    if (rhs._data.size() == 1 && rhs._data[0] == 0) {
-      return TLongAlg("1");
     }
 
     auto a = lhs;
-    auto size = rhs._data.size();
-    for (int i = 0; i < size; ++i) {
-      while (rhs._data[i] > 0) {
-        if (rhs._data[i] & 1) {
-          result = result * a;
-        }
-        a = a * a;
-        rhs._data[i] /= 2;
+    while (rhs > 0) {
+      if (rhs._data[0] & 1) {
+        result = result * a;
       }
+      a = a * a;
+      rhs = rhs / 2;
     }
 
 
+    result.ClearZeroes();
     return result;
   }
 
@@ -237,10 +237,6 @@ public:
     if (obj._data.empty()) {
       out << "0";
       return out;
-    }
-
-    while (obj._data.size() > 1 && obj._data.back() == 0) {
-      obj._data.pop_back();
     }
 
     out << obj._data.back();
