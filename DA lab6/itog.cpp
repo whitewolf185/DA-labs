@@ -209,28 +209,20 @@ public:
 
   //возведение в степень
   friend TLongAlg operator^(const TLongAlg &lhs, TLongAlg rhs) {
-    TLongAlg result = TLongAlg("1");
-    if (lhs._data.size() == 1 && lhs._data[0] == 0 && rhs._data.size() == 1 && rhs._data[0] == 0) {
+    TLongAlg result("1");
+    if (lhs == TLongAlg("0") && rhs == TLongAlg("0")) {
       throw std::invalid_argument("Error");
-    }
-    if (lhs._data.size() == 1 && lhs._data[0] == 0) {
-      return TLongAlg("0");
-    }
-    if (rhs._data.size() == 1 && rhs._data[0] == 0) {
-      return TLongAlg("1");
     }
 
     auto a = lhs;
-    auto size = rhs._data.size();
-    for (int i = 0; i < size; ++i) {
-      while (rhs._data[i] > 0) {
-        if (rhs._data[i] & 1) {
-          result = result * a;
-        }
-        a = a * a;
-        rhs._data[i] /= 2;
+    while (rhs > 0) {
+      if (rhs._data[0] & 1) {
+        result = result * a;
       }
+      a = a * a;
+      rhs = rhs / 2;
     }
+
 
     result.ClearZeroes();
     return result;
