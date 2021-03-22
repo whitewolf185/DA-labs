@@ -39,18 +39,36 @@ private:
       tmp->data = str;
       nodes.push_back(tmp);
     }
+
+//    ------------------------------TEST FUNCTIONS----------------------------------
+    void TestPush(const std::string &str) {
+      TBorNode *r = new TBorNode;
+      nodes.push_back(r);
+      for (int i = 0; i < str.length(); ++i) {
+        r->data = str[i];
+        if (i != str.length() - 1) {
+          r->next = new TBorNode;
+          r = r->next;
+        }
+      }
+    }
+//    -----------------------------------END----------------------------------------
+
   };
 
 
   TRootBorNode root;
 
-  void TestInsert(const std::string &str) {
-
-  }
-
+//    ------------------------------TEST FUNCTIONS----------------------------------
   void TestPrinter(int i) {
-
+    TBorNode *iter = root.nodes[i];
+    while (iter->next != nullptr) {
+      std::cout << iter->data << " ";
+      iter = iter->next;
+    }
+    std::cout << std::endl;
   }
+//    -----------------------------------END----------------------------------------
 
 public:
   TBoris() = default;
@@ -73,7 +91,7 @@ public:
 
   void Test() {
     for (int i = 0; i < Size(); ++i) {
-      TestInsert(texts[i]);
+      root.TestPush(texts[i]);
     }
 
     for (int i = 0; i < Size(); ++i) {
