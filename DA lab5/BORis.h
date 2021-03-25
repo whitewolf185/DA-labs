@@ -6,97 +6,87 @@
 #include <queue>
 #include <fstream>
 #include <vector>
+#include <unordered_map>
+#include <memory>
 
+const char FANTOM_CHAR1 = '$';
+const char FANTOM_CHAR2 = '%';
 
 class TBoris {
+  //---variables
+public:
+  std::shared_ptr<unsigned int> end;
 private:
-  std::vector<std::string> texts;
-  static const char FANTOM_CHAR = '$';
+  std::string texts;
+  unsigned globID = 0;
 
-  //simply nodes
+
+  //-----------------------simply nodes---------------------
   struct TBorNode {
-    std::string data;
-    TBorNode *url = nullptr;
-    TBorNode *next = nullptr;
+    //variables
+    unsigned int begin;
+    std::shared_ptr<unsigned> last;
+    bool leaf = true;
+//    std::unique_ptr<TBorNode> prev;
+    std::unordered_map<char, TBorNode *> next;
+    unsigned id;
 
-    TBorNode() = default;
+    //constructors
+    TBorNode(unsigned &globID, const unsigned &_begin, const std::shared_ptr<unsigned> &end) {
+      id = globID++;
+      last = end;
+      begin = _begin;
+    }
 
-    ~TBorNode() {
-      if (this->next != nullptr) {
-        delete this->next;
+    TBorNode() = delete;
+
+    //destructors
+    ~TBorNode() = default;
+
+    //functions
+    void PrintNode(const std::string &text) {
+      for (int i = begin; i <= *last; ++i) {
+        (text[i] == FANTOM_CHAR1 || text[i] == FANTOM_CHAR2) ? std::cout << " " : std::cout << text[i];
       }
+      std::cout << "|";
     }
   };
 
-  //root of all nodes
-  struct TRootBorNode {
-    std::vector<TBorNode *> nodes;
+  std::unordered_map<char, TBorNode *> root;
 
-    ~TRootBorNode() = default;
 
-    void Push(const std::string &str) {
-      TBorNode *tmp = new TBorNode;
-      tmp->data = str;
-      nodes.push_back(tmp);
-    }
-
+//----functions
 //    ------------------------------TEST FUNCTIONS----------------------------------
-    void TestPush(const std::string &str) {
-      TBorNode *r = new TBorNode;
-      nodes.push_back(r);
-      for (int i = 0; i < str.length(); ++i) {
-        r->data = str[i];
-        if (i != str.length() - 1) {
-          r->next = new TBorNode;
-          r = r->next;
-        }
-      }
+
+  void TestPrinter() {
+    for (auto item : root) {
+      item.second->PrintNode(texts);
+      std::cout << std::endl;
     }
-//    -----------------------------------END----------------------------------------
-
-  };
-
-
-  TRootBorNode root;
-
-//    ------------------------------TEST FUNCTIONS----------------------------------
-  void TestPrinter(int i) {
-    TBorNode *iter = root.nodes[i];
-    while (iter->next != nullptr) {
-      std::cout << iter->data << " ";
-      iter = iter->next;
-    }
-    std::cout << std::endl;
   }
 //    -----------------------------------END----------------------------------------
 
 public:
-  TBoris() = default;
+  TBoris() {
+    end.reset(new unsigned int(0));
+  };
 
   ~TBoris() {
-    while (!root.nodes.empty()) {
-      delete root.nodes.back();
-      root.nodes.pop_back();
+    for (auto &item : root) {
+      delete item.second;
     }
   }
 
-  void SetText(const std::string &str) {
-    texts.push_back(str + FANTOM_CHAR);
+  void SetText(const std::string &str1, const std::string &str2) {
+    texts = str1 + FANTOM_CHAR1 + str2 + FANTOM_CHAR2;
   }
 
-  //size of vector texts. Needed to know how many patterns i have
-  unsigned int Size() const {
-    return texts.size();
-  }
 
   void Test() {
-    for (int i = 0; i < Size(); ++i) {
-      root.TestPush(texts[i]);
-    }
+    *end = texts.size() - 1;
+    root.insert(std::pair<char, TBorNode *>(texts[0], new TBorNode(globID, 0, end)));
 
-    for (int i = 0; i < Size(); ++i) {
-      TestPrinter(i);
-    }
+    TestPrinter();
   }
 
 
