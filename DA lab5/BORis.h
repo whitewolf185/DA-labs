@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include <memory>
 
-const char FANTOM_CHAR1 = '$';
-const char FANTOM_CHAR2 = '%';
+const char FANTOM_CHAR1 = '%';
+const char FANTOM_CHAR2 = '$';
 
 class TBoris {
   //---variables
@@ -62,7 +62,7 @@ private:
     //Ф нужна для вывода данных в ноде. Нужна больше для отладки
     void PrintNode(const std::string &text) {
       for (int i = begin; i <= *last; ++i) {
-        (text[i] == FANTOM_CHAR1 || text[i] == FANTOM_CHAR2) ? std::cout << " " : std::cout << text[i];
+        std::cout << text[i];
       }
       std::cout << "|";
     }
@@ -120,7 +120,7 @@ public:
   ~TBoris() = default;
 
   void SetText(const std::string &str1, const std::string &str2) {
-    texts = str1 + FANTOM_CHAR1 + str2 + FANTOM_CHAR2;
+    texts = str1 + FANTOM_CHAR2;// + FANTOM_CHAR1 + str2 ;
   }
 
 //--------------------------------ITERATOR-------------------------------
@@ -174,8 +174,6 @@ public:
       if (activeNode->url == nullptr) {
         throw std::logic_error("Trying to call nullptr in URL");
       }
-
-      //TODO возможно тут ошибка, связанная с тем, что prevNode = activNode->url
       prevNode = activeNode;
       activeNode = activeNode->url;
     }
@@ -223,11 +221,15 @@ public:
     }
 
     //getters and setters
-    std::shared_ptr<TBorNode> GetActiveNode() {
+    std::shared_ptr<TBorNode> GetActiveNode() const {
       return activeNode;
     }
 
-    char GetSymbol(const std::string &_texts, const int &edge, const int &activeLen) {
+    std::shared_ptr<TBorNode> GetPrevNode() const {
+      return prevNode;
+    }
+
+    char GetSymbol(const std::string &_texts, const int &edge, const int &activeLen) const {
       auto tmp = activeNode->GetNodeElem(_texts[edge]);
       if (tmp != nullptr) {
         return _texts[activeNode->GetNodeElem(_texts[edge])->begin + activeLen];
@@ -241,10 +243,6 @@ public:
         return false;
       }
       return true;
-    }
-
-    void SetURL(const std::shared_ptr<TBorNode> &rhsUrl) {
-      activeNode->url = rhsUrl;
     }
 
     void SetPrevNull() {
@@ -283,37 +281,57 @@ public:
     int activeLen = 0;
     int edge = 0;
     TIterator Node(root);
+    bool splitFlag = true;
 
     for (*end = 0; *end < texts.size(); ++*end) {
       ++remainder;
+      Node.SetPrevNull();
       while (remainder > 0) {
         if (activeLen <= 0 && !Node.FindPath(texts[*end])) {
+          splitFlag = true;
           --remainder;
-          Node.Insert(std::pair<char, std::shared_ptr<TBorNode>>(texts[*end + activeLen],
-                                                                 std::make_shared<TBorNode>(root, globID,
-                                                                                            *end + activeLen, end)));
+          Node.Insert(std::pair<char, std::shared_ptr<TBorNode>>(texts[*end],
+                                                                 std::make_shared<TBorNode>(root, globID, *end, end)));
           Node.GoThrowURL();
+          Node.SetPrevNull();
+          edge = 0;
         }
 
-        else if (activeLen > 0 && texts[*end] != texts[Node.GetActiveNode()->begin + activeLen]) {
+          //Сплитуем
+        else if (Node.Next(texts[edge]) != nullptr &&
+                 activeLen > 0 &&
+                 texts[*end] != texts[Node.Next(texts[edge])->begin + activeLen]) {
+          splitFlag = true;
           TIterator tmp(Node.Next(texts[edge]));
-          tmp.Split(root, globID, texts, end, *end, activeLen);
+          tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen);
           --remainder;
+
+          if (Node.IsPrevNOTNull()) {
+            Node.GetPrevNode()->url = tmp.GetActiveNode();
+            Node.SetPrevNull();
+          }
+
           if (Node.GetActiveNode() == root) {
             tmp.GoThrowURL();
             Node = tmp;
-            --activeLen;
+//            while (texts[edge] == texts[edge + 1]) {
+//              ++edge;
+//            }
             ++edge;
+            --activeLen;
           }
-
-          if (Node.IsPrevNOTNull()) {
-
+          else {
+            --activeLen;
           }
         }
 
         else {
+//          if (splitFlag) {
+//            splitFlag = false;
+          edge = *end;
+//          }
           ++activeLen;
-          std::shared_ptr<TBorNode> tmp = (Node.Next(texts[*end]));
+          std::shared_ptr<TBorNode> tmp = (Node.Next(texts[edge]));
           if (tmp != nullptr && activeLen > *tmp->last - tmp->begin) {
             activeLen -= *tmp->last - tmp->begin + 1;
             Node = tmp;

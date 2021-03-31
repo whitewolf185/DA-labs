@@ -1,51 +1,38 @@
-//#define TRY_BOR
+#define TRY_BOR
 
 #ifdef TRY_BOR
 #include "BORis.h"
 #endif
 
 #ifndef TRY_BOR
-
 #include <iostream>
 #include <memory>
-
 #endif
 
 int main() {
 #ifdef TRY_BOR
   TBoris a;
-  try{
-    std::string str1 = "hello";
-    std::string str2 = "hi";
-    a.SetText(str1,str2);
-    a.Test();
-    TBoris::TIterator iter(a.GetRoot());
-
-    iter.Next('h');
-    iter.Split(a.GetRoot(), a.GetID(),a.GetTexts(),a.GetEnd(),
-               a.GetTexts().size() - 1,3);
-
-    iter.PrintNode(a.GetTexts());
-    iter.Next(FANTOM_CHAR2);
-    iter.PrintNode(a.GetTexts());
+  try {
+    std::string str1 = "aabaa";
+    std::string str2 = "aa";
+    a.SetText(str1, str2);
+    a.Build();
+    std::cout << "im done";
   }
-  catch (const std::invalid_argument& e){
-    std::cout << e.what();
+  catch (const std::invalid_argument &e) {
+    std::cerr << e.what();
   }
-  catch (const std::logic_error& e){
-    std::cout << e.what();
+  catch (const std::logic_error &e) {
+    std::cerr << e.what();
   }
 #endif
 
 #ifndef TRY_BOR
-  int *tmp = new int(1);
-  std::unique_ptr<int> a(new int(2345));
-  std::unique_ptr<int> b = std::move(a);
-  a.reset(tmp);
-  ++*a;
+  int i = 0;
+  for (i = 0; i <= 10; i++) {
 
-  std::cout << "a = " << *a << std::endl;
-  std::cout << "b = " << *b << std::endl;
+  }
+  std::cout << i;
 #endif
 
   return 0;
