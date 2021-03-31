@@ -4,4 +4,3 @@ project(suff_tree-lab5)
 set(CMAKE_CXX_STANDARD 11)
 
 add_executable(start BORis.h main.cpp)
-add_executable(test test.cpp BORis.h test_funcs.h testFuncs_forRootNode.h)
