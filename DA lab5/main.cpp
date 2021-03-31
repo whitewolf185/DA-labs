@@ -13,7 +13,7 @@ int main() {
 #ifdef TRY_BOR
   TBoris a;
   try {
-    std::string str1 = "dffaaccffacf";
+    std::string str1 = "xyzxyaxyz";
     std::string str2 = "aa";
     a.SetText(str1, str2);
     a.Build();

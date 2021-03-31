@@ -249,6 +249,10 @@ public:
       prevNode = nullptr;
     }
 
+    void SetPrev(const std::shared_ptr<TBorNode> &node) {
+      prevNode = node;
+    }
+
     //отладочная функция
     void PrintNode(const std::string &_texts) {
       activeNode->PrintNode(_texts);
@@ -331,6 +335,7 @@ public:
           }
           else {
             Node.GoThrowURL();
+            Node.SetPrev(tmp.GetActiveNode());
           }
         }
 
