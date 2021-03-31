@@ -168,8 +168,6 @@ public:
     }
 
     //‘ перехода по суфф ссылке
-    //TODO переход по ссылке должен всегда происходить после создани€ новой ноды. ќна всегда сначала ведет в root.
-    // ≈сли active_node = root и active_length = 0, то ссылка остаетс€ направлена в root. »наче все идет по новой
     void GoThrowURL() {
       if (activeNode->url == nullptr) {
         throw std::logic_error("Trying to call nullptr in URL");
@@ -189,7 +187,6 @@ public:
                const std::shared_ptr<int> &_end,
                const int &begin, const unsigned &splitter) {
 
-      //TODO помнить про globID.
       //старый элемент
       auto oldNode = std::make_shared<TBorNode>(_root, _globID, splitter, _end);
       oldNode->Copy(activeNode);
@@ -365,7 +362,9 @@ public:
 
 
 };
-
+//TODO ѕоиск выполн€тс€ через DFS.
+//TODO ѕри поиске нужно будет определить на какой позиции находитс€ 1-ый сентинел, чтобы потом, дойд€ до листа,
+// можно было вы€снить к какому слову относитс€ данный суффикс.
 
 #endif //SUFF_TREE_LAB5_MAIN_H
 
