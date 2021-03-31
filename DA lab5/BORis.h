@@ -15,28 +15,29 @@ const char FANTOM_CHAR2 = '%';
 class TBoris {
   //---variables
 public:
-  std::shared_ptr<unsigned int> end;
+  std::shared_ptr<int> end;
 private:
   std::string texts;
-  unsigned globID = 0;
+  int globID = -1;
 
 
   //-----------------------simply nodes---------------------
   struct TBorNode {
     //variables
-    unsigned int begin;
-    std::shared_ptr<unsigned> last;
+    int begin;
+    std::shared_ptr<int> last;
     bool leaf = true;
     std::shared_ptr<TBorNode> url;
     std::shared_ptr<TBorNode> prev;
     std::unordered_map<char, std::shared_ptr<TBorNode>> next;
-    unsigned id;
+    int id;
 
     //constructors
     //Конструктор. Первые 2 аргумента всегда должны быть одни и те же. Последние 2 - начало и общий конец.
     //По умолчанию все новые ноды создаются со ссылкой на root.
-    TBorNode(const std::shared_ptr<TBorNode> &root, unsigned &globID, const unsigned &_begin,
-             const std::shared_ptr<unsigned> &end) {
+    //TODO id-шники создаются только в листе
+    TBorNode(const std::shared_ptr<TBorNode> &root, int &globID, const int &_begin,
+             const std::shared_ptr<int> &end) {
       id = globID++;
       last = end;
       begin = _begin;
@@ -44,9 +45,9 @@ private:
     }
 
     //Конструктор с задаваемой в конце end-ом, как число. Нужен для вставки ноды не как лист.
-    TBorNode(const std::shared_ptr<TBorNode> &root, unsigned &globID, const unsigned &_begin, const unsigned &end) {
+    TBorNode(const std::shared_ptr<TBorNode> &root, int &globID, const int &_begin, const int &end) {
       id = globID++;
-      last.reset(new unsigned(end));
+      last.reset(new int(end));
       begin = _begin;
       url = root;
       leaf = false;
@@ -71,6 +72,7 @@ private:
     void Insert(const std::pair<char, std::shared_ptr<TBorNode>> &tmp_pair) {
       next.insert(tmp_pair);
       leaf = false;
+      id = -1;
     }
 
     //Ф получает ноду по символу. Нужно, чтобы доставать нужную ноду на развилке.
@@ -87,6 +89,7 @@ private:
       last = cmp->last;
       leaf = cmp->leaf;
       next = cmp->next;
+      id = cmp->id;
     }
 
   };
@@ -109,8 +112,9 @@ private:
 
 public:
   TBoris() {
-    end.reset(new unsigned int(0));
-    root.reset(new TBorNode(root, globID, 0, end));
+    end.reset(new int(0));
+    root.reset(new TBorNode(root, globID, -1, end));
+    root->url = root;
   };
 
   ~TBoris() = default;
@@ -122,15 +126,16 @@ public:
 //--------------------------------ITERATOR-------------------------------
   class TIterator {
   private:
-    int reminder = 0;
-    int activeLen = 0;
     std::shared_ptr<TBorNode> prevNode;
     std::shared_ptr<TBorNode> activeNode;
 
   public:
-    TIterator() = delete;
+    TIterator() {
+      activeNode = nullptr;
+      prevNode = nullptr;
+    }
 
-    TIterator(std::shared_ptr<TBorNode> node) {
+    TIterator(const std::shared_ptr<TBorNode> &node) {
       activeNode = node;
       prevNode = nullptr;
     }
@@ -138,20 +143,33 @@ public:
     ~TIterator() = default;
 
     //Ф перехода на следующую ноду
-    void Next(const char &c) {
+    std::shared_ptr<TBorNode> Next(const char &c) {
       if (activeNode == nullptr) {
-        throw std::logic_error("Trying to call nullptr in Next");
+        return nullptr;
       }
 
       auto tmp = activeNode->GetNodeElem(c);
       if (tmp != nullptr) {
-        activeNode = tmp;
-        return;
+        return tmp;
       }
-      throw std::invalid_argument("Cannot find elem in Next");
+      return nullptr;
+    }
+
+    bool FindPath(const char &c) {
+      if (activeNode == nullptr) {
+        return false;
+      }
+
+      auto tmp = activeNode->GetNodeElem(c);
+      if (tmp != nullptr) {
+        return true;
+      }
+      return false;
     }
 
     //Ф перехода по суфф ссылке
+    //TODO переход по ссылке должен всегда происходить после создания новой ноды. Она всегда сначала ведет в root.
+    // Если active_node = root и active_length = 0, то ссылка остается направлена в root. Иначе все идет по новой
     void GoThrowURL() {
       if (activeNode->url == nullptr) {
         throw std::logic_error("Trying to call nullptr in URL");
@@ -162,25 +180,75 @@ public:
       activeNode = activeNode->url;
     }
 
+    void Insert(const std::pair<char, std::shared_ptr<TBorNode>> &tmp_pair) {
+      activeNode->Insert(tmp_pair);
+    }
+
     //Ф нужна для того, чтобы разделить ноду на 2. С _ идут аргументы обязательные для создания новой ноды.
     //Потом идут begin - индекс символа нового элемента, splitter - индекс символа сплитуемого элемента.
     //Стоит также отметить, что после сплита я остаюсь на той же ноде, что и был. Никакого перехода нет.
-    void Split(const std::shared_ptr<TBorNode> &_root, unsigned int &_globID, const std::string &_texts,
-               const std::shared_ptr<unsigned> &_end,
-               const unsigned int &begin, const unsigned &splitter) {
+    void Split(const std::shared_ptr<TBorNode> &_root, int &_globID, const std::string &_texts,
+               const std::shared_ptr<int> &_end,
+               const int &begin, const unsigned &splitter) {
 
-      //TODO устранил возможную ошибку с разделением не в листе. Может появится ошибка при копировании.
+      //TODO помнить про globID.
       //старый элемент
-      auto oldNode = std::make_shared<TBorNode>(_root, _globID, splitter + 1, _end);
+      auto oldNode = std::make_shared<TBorNode>(_root, _globID, splitter, _end);
       oldNode->Copy(activeNode);
-      activeNode->last.reset(new unsigned(splitter));
+      --_globID;
+
+      activeNode->last.reset(new int(splitter - 1));
       activeNode->leaf = false;
-      activeNode->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[splitter + 1],
+      activeNode->id = -1;
+      activeNode->next.clear();
+      activeNode->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[splitter],
                                                                     oldNode));
       //новый элемент
       activeNode->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[begin],
                                                                     std::make_shared<TBorNode>(_root, _globID, begin,
                                                                                                _end)));
+    }
+
+    TIterator &operator=(const std::shared_ptr<TBorNode> &rhs) {
+      if (rhs != nullptr) {
+        activeNode = rhs;
+      }
+      return *this;
+    }
+
+    TIterator &operator=(const TIterator &rhs) {
+      activeNode = rhs.activeNode;
+      prevNode = rhs.prevNode;
+      return *this;
+    }
+
+    //getters and setters
+    std::shared_ptr<TBorNode> GetActiveNode() {
+      return activeNode;
+    }
+
+    char GetSymbol(const std::string &_texts, const int &edge, const int &activeLen) {
+      auto tmp = activeNode->GetNodeElem(_texts[edge]);
+      if (tmp != nullptr) {
+        return _texts[activeNode->GetNodeElem(_texts[edge])->begin + activeLen];
+      }
+      throw std::logic_error("Trying to call non exist char in GetSymbol");
+    }
+
+    //Геттер нужен для того, чтобы вернуть ноль, если prevNode пустой. Иначе вернуть сам этот prevNode.
+    bool IsPrevNOTNull() {
+      if (prevNode == nullptr) {
+        return false;
+      }
+      return true;
+    }
+
+    void SetURL(const std::shared_ptr<TBorNode> &rhsUrl) {
+      activeNode->url = rhsUrl;
+    }
+
+    void SetPrevNull() {
+      prevNode = nullptr;
     }
 
     //отладочная функция
@@ -197,7 +265,7 @@ public:
     return root;
   }
 
-  unsigned int &GetID() {
+  int &GetID() {
     return globID;
   }
 
@@ -205,20 +273,75 @@ public:
     return texts;
   }
 
-  std::shared_ptr<unsigned> GetEnd() const {
+  std::shared_ptr<int> GetEnd() const {
     return end;
   }
 
 
-  //Ф нужна для инкрементирования end
-  void IncEnd() {
-    ++*end;
+  void Build() {
+    int remainder = 0;
+    int activeLen = 0;
+    int edge = 0;
+    TIterator Node(root);
+
+    for (*end = 0; *end < texts.size(); ++*end) {
+      ++remainder;
+      while (remainder > 0) {
+        if (activeLen <= 0 && !Node.FindPath(texts[*end])) {
+          --remainder;
+          Node.Insert(std::pair<char, std::shared_ptr<TBorNode>>(texts[*end + activeLen],
+                                                                 std::make_shared<TBorNode>(root, globID,
+                                                                                            *end + activeLen, end)));
+          Node.GoThrowURL();
+        }
+
+        else if (activeLen > 0 && texts[*end] != texts[Node.GetActiveNode()->begin + activeLen]) {
+          TIterator tmp(Node.Next(texts[edge]));
+          tmp.Split(root, globID, texts, end, *end, activeLen);
+          --remainder;
+          if (Node.GetActiveNode() == root) {
+            tmp.GoThrowURL();
+            Node = tmp;
+            --activeLen;
+            ++edge;
+          }
+
+          if (Node.IsPrevNOTNull()) {
+
+          }
+        }
+
+        else {
+          ++activeLen;
+          std::shared_ptr<TBorNode> tmp = (Node.Next(texts[*end]));
+          if (tmp != nullptr && activeLen > *tmp->last - tmp->begin) {
+            activeLen -= *tmp->last - tmp->begin + 1;
+            Node = tmp;
+          }
+          break;
+        }
+        //смотрю есть ли путь из activeNode.
+        //если есть, увеличиваю remainder,
+        // если нет - уменьшаю remainder и создаю новую ноду. Затем делаю ссылку.
+
+        //если есть совпадение, то break
+//        Node.GetSymbol(texts,edge,activeLen);
+        //думаю куда идти дальше
+        //когда длина больше 0, то я
+
+        //TODO помнить про случай, когда activeLen больше last - begin. В этом случае я должен перейти на след ноду.
+      }
+    }
+    --*end;
+
+    TestPrinter();
   }
 
   void Test() {
     *end = texts.size() - 2;
     root->Insert(
-            std::pair<char, std::shared_ptr<TBorNode>>(texts[0], std::make_shared<TBorNode>(root, globID, 0, end)));
+            std::pair<char, std::shared_ptr<TBorNode>>(texts[0],
+                                                       std::make_shared<TBorNode>(root, globID, 0, end)));
 
     TestPrinter();
   }
@@ -228,3 +351,6 @@ public:
 
 
 #endif //SUFF_TREE_LAB5_MAIN_H
+
+
+//aabaa
