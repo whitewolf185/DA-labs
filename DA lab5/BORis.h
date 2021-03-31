@@ -287,6 +287,15 @@ public:
       ++remainder;
       Node.SetPrevNull();
       while (remainder > 0) {
+
+        std::shared_ptr<TBorNode> checkNode = (Node.Next(texts[edge]));
+        while (checkNode != nullptr && activeLen > *checkNode->last - checkNode->begin) {
+          activeLen -= *checkNode->last - checkNode->begin + 1;
+          Node = checkNode;
+          edge = *end - activeLen;
+          checkNode = Node.Next(texts[edge]);
+        }
+
         if (activeLen <= 0 && !Node.FindPath(texts[*end])) {
           splitFlag = true;
           --remainder;
@@ -294,7 +303,7 @@ public:
                                                                  std::make_shared<TBorNode>(root, globID, *end, end)));
           Node.GoThrowURL();
           Node.SetPrevNull();
-          edge = 0;
+          edge = -1;
         }
 
           //Сплитуем
@@ -314,40 +323,25 @@ public:
           if (Node.GetActiveNode() == root) {
             tmp.GoThrowURL();
             Node = tmp;
-//            while (texts[edge] == texts[edge + 1]) {
-//              ++edge;
-//            }
+            while (texts[edge] == texts[edge + 1]) {
+              ++edge;
+            }
             ++edge;
             --activeLen;
           }
           else {
-            --activeLen;
+            Node.GoThrowURL();
           }
         }
 
         else {
-//          if (splitFlag) {
-//            splitFlag = false;
-          edge = *end;
-//          }
-          ++activeLen;
-          std::shared_ptr<TBorNode> tmp = (Node.Next(texts[edge]));
-          if (tmp != nullptr && activeLen > *tmp->last - tmp->begin) {
-            activeLen -= *tmp->last - tmp->begin + 1;
-            Node = tmp;
+          if (splitFlag) {
+            splitFlag = false;
+            edge = *end;
           }
+          ++activeLen;
           break;
         }
-        //смотрю есть ли путь из activeNode.
-        //если есть, увеличиваю remainder,
-        // если нет - уменьшаю remainder и создаю новую ноду. Затем делаю ссылку.
-
-        //если есть совпадение, то break
-//        Node.GetSymbol(texts,edge,activeLen);
-        //думаю куда идти дальше
-        //когда длина больше 0, то я
-
-        //TODO помнить про случай, когда activeLen больше last - begin. В этом случае я должен перейти на след ноду.
       }
     }
     --*end;
