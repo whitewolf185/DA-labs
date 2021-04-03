@@ -13,11 +13,13 @@ int main() {
 #ifdef TRY_BOR
   TBoris a;
   try {
-    std::string str1 = "xyzxyaxyz";
-    std::string str2 = "aa";
+    std::string str1;
+    std::string str2;
+    std::cin >> str1 >> str2;
     a.SetText(str1, str2);
     a.Build();
-    std::cout << "im done";
+    a.Colorize();
+//    std::cout << "im done";
   }
   catch (const std::invalid_argument &e) {
     std::cerr << e.what();

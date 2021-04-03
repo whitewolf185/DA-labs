@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <set>
 
 const char FANTOM_CHAR1 = '%';
 const char FANTOM_CHAR2 = '$';
@@ -19,6 +20,8 @@ public:
 private:
   std::string texts;
   int globID = -1;
+  int one2two = -1;
+  int wroomWroom = -1;
 
 
   //-----------------------simply nodes---------------------
@@ -28,14 +31,14 @@ private:
     std::shared_ptr<int> last;
     bool leaf = true;
     std::shared_ptr<TBorNode> url;
-    std::shared_ptr<TBorNode> prev;
     std::unordered_map<char, std::shared_ptr<TBorNode>> next;
     int id;
+    bool red = false;
+    bool blue = false;
 
     //constructors
     //Конструктор. Первые 2 аргумента всегда должны быть одни и те же. Последние 2 - начало и общий конец.
     //По умолчанию все новые ноды создаются со ссылкой на root.
-    //TODO id-шники создаются только в листе
     TBorNode(const std::shared_ptr<TBorNode> &root, int &globID, const int &_begin,
              const std::shared_ptr<int> &end) {
       id = globID++;
@@ -97,19 +100,7 @@ private:
 protected:
   std::shared_ptr<TBorNode> root;
 
-
 //----functions
-//    ------------------------------TEST FUNCTIONS----------------------------------
-
-private:
-  void TestPrinter() {
-    for (auto item : root->next) {
-      item.second->PrintNode(texts);
-      std::cout << std::endl;
-    }
-  }
-//    -----------------------------------END----------------------------------------
-
 public:
   TBoris() {
     end.reset(new int(0));
@@ -120,7 +111,8 @@ public:
   ~TBoris() = default;
 
   void SetText(const std::string &str1, const std::string &str2) {
-    texts = str1 + FANTOM_CHAR2;// + FANTOM_CHAR1 + str2 ;
+    texts = str1 + FANTOM_CHAR1 + str2 + FANTOM_CHAR2;
+    one2two = str1.size();
   }
 
 //--------------------------------ITERATOR-------------------------------
@@ -135,7 +127,7 @@ public:
       prevNode = nullptr;
     }
 
-    TIterator(const std::shared_ptr<TBorNode> &node) {
+    explicit TIterator(const std::shared_ptr<TBorNode> &node) {
       activeNode = node;
       prevNode = nullptr;
     }
@@ -185,7 +177,7 @@ public:
     //Стоит также отметить, что после сплита я остаюсь на той же ноде, что и был. Никакого перехода нет.
     void Split(const std::shared_ptr<TBorNode> &_root, int &_globID, const std::string &_texts,
                const std::shared_ptr<int> &_end,
-               const int &begin, const unsigned &splitter) {
+               const int &begin, const int &splitter) {
 
       //старый элемент
       auto oldNode = std::make_shared<TBorNode>(_root, _globID, splitter, _end);
@@ -222,6 +214,10 @@ public:
       return activeNode;
     }
 
+    int GetBegin() const {
+      return activeNode->begin;
+    }
+
     std::shared_ptr<TBorNode> GetPrevNode() const {
       return prevNode;
     }
@@ -235,7 +231,7 @@ public:
     }
 
     //Геттер нужен для того, чтобы вернуть ноль, если prevNode пустой. Иначе вернуть сам этот prevNode.
-    bool IsPrevNOTNull() {
+    bool IsPrevNotNull() {
       if (prevNode == nullptr) {
         return false;
       }
@@ -250,8 +246,36 @@ public:
       prevNode = node;
     }
 
+    void ColorBlue() {
+      activeNode->blue = true;
+    }
+
+    void ColorRed() {
+      activeNode->red = true;
+    }
+
+    bool BothColored() {
+      return activeNode->red && activeNode->blue;
+    }
+
+    bool GetRed() {
+      return activeNode->red;
+    }
+
+    bool GetBlue() {
+      return activeNode->blue;
+    }
+
+    std::string GetString(const std::string &_texts, const int &_begin, const int &_end) {
+      std::string result;
+      for (int i = _begin; i <= _end; ++i) {
+        result += _texts[i];
+      }
+      return result;
+    }
+
     //отладочная функция
-    void PrintNode(const std::string &_texts) {
+    [[maybe_unused]] void PrintNode(const std::string &_texts) {
       activeNode->PrintNode(_texts);
       std::cout << std::endl;
     }
@@ -316,7 +340,7 @@ public:
           tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen);
           --remainder;
 
-          if (Node.IsPrevNOTNull()) {
+          if (Node.IsPrevNotNull()) {
             Node.GetPrevNode()->url = tmp.GetActiveNode();
             Node.SetPrevNull();
           }
@@ -347,17 +371,63 @@ public:
       }
     }
     --*end;
-
-    TestPrinter();
   }
 
-  void Test() {
-    *end = texts.size() - 2;
-    root->Insert(
-            std::pair<char, std::shared_ptr<TBorNode>>(texts[0],
-                                                       std::make_shared<TBorNode>(root, globID, 0, end)));
+private:
+  void ColorizeHelp(TIterator &node, std::set<std::string> &ans, int &ansCount) {
+    if (node.GetActiveNode()->leaf) {
+      wroomWroom = node.GetActiveNode()->id;
+      if (node.GetActiveNode()->begin <= one2two) {
+        node.ColorRed();
+        return;
+      }
+      node.ColorBlue();
+      return;
+    }
 
-    TestPrinter();
+    for (const auto &item : node.GetActiveNode()->next) {
+      TIterator nextNode(item.second);
+      ColorizeHelp(nextNode, ans, ansCount);
+
+      if (node.BothColored()) { break; }
+
+      if (nextNode.GetBlue()) {
+        node.ColorBlue();
+      }
+      if (nextNode.GetRed()) {
+        node.ColorRed();
+      }
+    }
+
+    if (node.BothColored()) {
+      if (*node.GetActiveNode()->last - wroomWroom + 1 > ansCount) {
+//        std::cout << node.GetActiveNode() << std::endl;
+        ans.clear();
+        ansCount = *node.GetActiveNode()->last - wroomWroom + 1;
+        ans.insert(node.GetString(texts, wroomWroom, *node.GetActiveNode()->last));
+      }
+      else if (*node.GetActiveNode()->last - wroomWroom + 1 == ansCount) {
+        ans.insert(node.GetString(texts, wroomWroom, *node.GetActiveNode()->last));
+      }
+    }
+  }
+
+public:
+  void Colorize() {
+    std::set<std::string> ans;
+    int ansCount = 0;
+    TIterator node(root);
+    for (const auto &item : node.GetActiveNode()->next) {
+      TIterator nextNode(item.second);
+      ColorizeHelp(nextNode, ans, ansCount);
+    }
+
+    std::cout << ansCount << std::endl;
+    if (!ans.empty()) {
+      for (const auto &item : ans) {
+        std::cout << item << std::endl;
+      }
+    }
   }
 
 
@@ -367,6 +437,3 @@ public:
 // можно было выяснить к какому слову относится данный суффикс.
 
 #endif //SUFF_TREE_LAB5_MAIN_H
-
-
-//aabaa
