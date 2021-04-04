@@ -74,7 +74,6 @@ private:
     void Insert(const std::pair<char, std::shared_ptr<TBorNode>> &tmp_pair) {
       next.insert(tmp_pair);
       leaf = false;
-      id = -1;
     }
 
     //Ф получает ноду по символу. Нужно, чтобы доставать нужную ноду на развилке.
@@ -92,6 +91,7 @@ private:
       leaf = cmp->leaf;
       next = cmp->next;
       id = cmp->id;
+      url = cmp->url;
     }
 
   };
@@ -196,8 +196,8 @@ public:
 
       activeNode->last.reset(new int(splitter - 1));
       activeNode->leaf = false;
-      activeNode->id = -1;
       activeNode->next.clear();
+      activeNode->url = _root;
       activeNode->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[splitter],
                                                                     oldNode));
       //новый элемент
@@ -317,15 +317,16 @@ public:
     int edge = 0;
     TIterator Node(root);
     bool splitFlag = true;
+    int i;
 
     for (*end = 0; *end < texts.size(); ++*end) {
-      ++remainder;
+      i = *end;
+//      ++remainder;
       Node.SetPrevNull();
-      while (remainder > 0) {
-
+      while (globID <= *end) {
         std::shared_ptr<TBorNode> checkNode = (Node.Next(texts[edge]));
         while (checkNode != nullptr && activeLen > *checkNode->last - checkNode->begin) {
-          activeLen -= *checkNode->last - checkNode->begin + 1;
+          activeLen = activeLen - 1 - (*checkNode->last - checkNode->begin);
           Node = checkNode;
           edge = *end - activeLen;
           checkNode = Node.Next(texts[edge]);
@@ -333,9 +334,13 @@ public:
 
         if (activeLen <= 0 && !Node.FindPath(texts[*end])) {
           splitFlag = true;
-          --remainder;
+//          --remainder;
           Node.Insert(std::pair<char, std::shared_ptr<TBorNode>>(texts[*end],
                                                                  std::make_shared<TBorNode>(root, globID, *end, end)));
+          if (Node.IsPrevNotNull()) {
+            Node.GetPrevNode()->url = Node.GetActiveNode();
+            Node.SetPrevNull();
+          }
           Node.GoThrowURL();
           Node.SetPrevNull();
           edge = -1;
@@ -348,7 +353,7 @@ public:
           splitFlag = true;
           TIterator tmp(Node.Next(texts[edge]));
           tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen);
-          --remainder;
+//          --remainder;
 
           if (Node.IsPrevNotNull()) {
             Node.GetPrevNode()->url = tmp.GetActiveNode();
@@ -376,8 +381,14 @@ public:
             edge = *end;
           }
           ++activeLen;
+          TIterator iter(root);
+          PrintTree(iter, 0);
+          std::cout << "-------------" << i << std::endl;
           break;
         }
+        TIterator iter(root);
+        PrintTree(iter, 0);
+        std::cout << "-------------" << i << std::endl;
       }
     }
     --*end;
