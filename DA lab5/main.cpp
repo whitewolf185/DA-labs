@@ -19,6 +19,9 @@ int main() {
     a.SetText(str1, str2);
     a.Build();
     a.Colorize();
+//    TBoris::TIterator iter (a.GetRoot());
+//    std::cout << std::endl;
+//    a.PrintTree(iter,0);
 //    std::cout << "im done";
   }
   catch (const std::invalid_argument &e) {
@@ -30,11 +33,8 @@ int main() {
 #endif
 
 #ifndef TRY_BOR
-  int i = 0;
-  for (i = 0; i <= 10; i++) {
 
-  }
-  std::cout << i;
+  std::cout << ' ' * 4;
 #endif
 
   return 0;

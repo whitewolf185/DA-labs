@@ -67,7 +67,6 @@ private:
       for (int i = begin; i <= *last; ++i) {
         std::cout << text[i];
       }
-      std::cout << "|";
     }
 
     //Нужна для вставки следующего элемента. В аргументах пара,
@@ -100,15 +99,26 @@ private:
 protected:
   std::shared_ptr<TBorNode> root;
 
+  void Deleter(std::shared_ptr<TBorNode> &node) {
+    if (!node->leaf) {
+      for (auto &item : node->next) {
+        Deleter(item.second);
+      }
+    }
+    node->url = nullptr;
+  }
+
 //----functions
 public:
   TBoris() {
-    end.reset(new int(0));
-    root.reset(new TBorNode(root, globID, -1, end));
+    end = std::make_shared<int>(0);
+    root = std::make_shared<TBorNode>(root, globID, -1, end);
     root->url = root;
   };
 
-  ~TBoris() = default;
+  ~TBoris() {
+    Deleter(root);
+  };
 
   void SetText(const std::string &str1, const std::string &str2) {
     texts = str1 + FANTOM_CHAR1 + str2 + FANTOM_CHAR2;
@@ -427,6 +437,31 @@ public:
       for (const auto &item : ans) {
         std::cout << item << std::endl;
       }
+    }
+  }
+
+  void PrintTree(const TIterator &node, int count) {
+    if (node.GetActiveNode()->leaf) {
+      for (int i = 1; i < count; ++i) {
+        std::cout << '-';
+      }
+      node.GetActiveNode()->PrintNode(texts);
+      std::cout << std::endl;
+      return;
+    }
+
+    if (node.GetActiveNode() != root) {
+      for (int i = 1; i < count; ++i) {
+        std::cout << '-';
+      }
+      node.GetActiveNode()->PrintNode(texts);
+      std::cout << std::endl;
+    }
+
+    ++count;
+    for (const auto &item : node.GetActiveNode()->next) {
+      TIterator tmp(item.second);
+      PrintTree(tmp, count);
     }
   }
 
