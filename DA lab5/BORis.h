@@ -1,6 +1,8 @@
 #ifndef SUFF_TREE_LAB5_MAIN_H
 #define SUFF_TREE_LAB5_MAIN_H
 
+//#define DEBUG
+
 #include <string>
 #include <iostream>
 #include <queue>
@@ -79,11 +81,13 @@ private:
     //Ф получает ноду по символу. Нужно, чтобы доставать нужную ноду на развилке.
     // Обычно используется в Ф Next
     std::shared_ptr<TBorNode> GetNodeElem(const char &c) {
-      auto tmp = next.find(c);
-      if (tmp == next.end()) {
-        return nullptr;
+      if (!next.empty()) {
+        if (next.find(c) == next.end()) {
+          return nullptr;
+        }
+        return next.find(c)->second;
       }
-      return tmp->second;
+      return nullptr;
     }
 
     void Copy(const std::shared_ptr<TBorNode> &cmp) {
@@ -214,7 +218,6 @@ public:
     }
 
     TIterator &operator=(const TIterator &rhs) {
-      activeNode = rhs.activeNode;
       prevNode = rhs.prevNode;
       return *this;
     }
@@ -285,10 +288,12 @@ public:
     }
 
     //отладочная функция
+#ifdef DEBUG
     [[maybe_unused]] void PrintNode(const std::string &_texts) {
       activeNode->PrintNode(_texts);
       std::cout << std::endl;
     }
+#endif
 
   };
 //--------------------------END OF ITERATOR--------------------------
@@ -312,16 +317,15 @@ public:
 
 
   void Build() {
-    int remainder = 0;
     int activeLen = 0;
     int edge = 0;
     TIterator Node(root);
     bool splitFlag = true;
-    int i;
+
+//    int i;
 
     for (*end = 0; *end < texts.size(); ++*end) {
-      i = *end;
-//      ++remainder;
+//      i = *end;
       Node.SetPrevNull();
       while (globID <= *end) {
         std::shared_ptr<TBorNode> checkNode = (Node.Next(texts[edge]));
@@ -343,7 +347,7 @@ public:
           }
           Node.GoThrowURL();
           Node.SetPrevNull();
-          edge = -1;
+          edge = 0;
         }
 
           //Сплитуем
@@ -363,9 +367,6 @@ public:
           if (Node.GetActiveNode() == root) {
             tmp.GoThrowURL();
             Node = tmp;
-            while (texts[edge] == texts[edge + 1]) {
-              ++edge;
-            }
             ++edge;
             --activeLen;
           }
@@ -381,14 +382,18 @@ public:
             edge = *end;
           }
           ++activeLen;
+#ifdef DEBUG
           TIterator iter(root);
           PrintTree(iter, 0);
           std::cout << "-------------" << i << std::endl;
+#endif
           break;
         }
+#ifdef DEBUG
         TIterator iter(root);
         PrintTree(iter, 0);
         std::cout << "-------------" << i << std::endl;
+#endif
       }
     }
     --*end;
