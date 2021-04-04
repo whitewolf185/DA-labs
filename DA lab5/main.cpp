@@ -19,9 +19,11 @@ int main() {
     a.SetText(str1, str2);
     a.Build();
     a.Colorize();
-//    TBoris::TIterator iter(a.GetRoot());
-//    std::cout << std::endl;
-//    a.PrintTree(iter, 0);
+#ifdef DEBUG
+    TBoris::TIterator iter(a.GetRoot());
+    std::cout << std::endl;
+    a.PrintTree(iter, 0);
+#endif
 //    std::cout << "im done";
   }
   catch (const std::invalid_argument &e) {

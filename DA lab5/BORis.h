@@ -188,26 +188,24 @@ public:
 
     //Ф нужна для того, чтобы разделить ноду на 2. С _ идут аргументы обязательные для создания новой ноды.
     //Потом идут begin - индекс символа нового элемента, splitter - индекс символа сплитуемого элемента.
-    //Стоит также отметить, что после сплита я остаюсь на той же ноде, что и был. Никакого перехода нет.
     void Split(const std::shared_ptr<TBorNode> &_root, int &_globID, const std::string &_texts,
                const std::shared_ptr<int> &_end,
-               const int &begin, const int &splitter) {
-
-      //старый элемент
-      auto oldNode = std::make_shared<TBorNode>(_root, _globID, splitter, _end);
-      oldNode->Copy(activeNode);
+               const int &begin, const int &splitter, std::shared_ptr<TBorNode> Node) {
+      Node->next.erase(_texts[activeNode->begin]);
+      Node->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[activeNode->begin],
+                                                              std::make_shared<TBorNode>(_root, _globID,
+                                                                                         activeNode->begin,
+                                                                                         splitter - 1)));
+      std::shared_ptr<TBorNode> tmp = Node->GetNodeElem(_texts[activeNode->begin]);
       --_globID;
-
-      activeNode->last.reset(new int(splitter - 1));
-      activeNode->leaf = false;
-      activeNode->next.clear();
-      activeNode->url = _root;
-      activeNode->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[splitter],
-                                                                    oldNode));
       //новый элемент
-      activeNode->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[begin],
-                                                                    std::make_shared<TBorNode>(_root, _globID, begin,
-                                                                                               _end)));
+      tmp->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[begin],
+                                                             std::make_shared<TBorNode>(_root, _globID, begin,
+                                                                                        _end)));
+      //Старый элемент
+      activeNode->begin = splitter;
+      tmp->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[activeNode->begin],
+                                                             activeNode));
     }
 
     TIterator &operator=(const std::shared_ptr<TBorNode> &rhs) {
@@ -322,10 +320,14 @@ public:
     TIterator Node(root);
     bool splitFlag = true;
 
-//    int i;
+#ifdef DEBUG
+    int i;
+#endif
 
     for (*end = 0; *end < texts.size(); ++*end) {
-//      i = *end;
+#ifdef DEBUG
+      i = *end;
+#endif
       Node.SetPrevNull();
       while (globID <= *end) {
         std::shared_ptr<TBorNode> checkNode = (Node.Next(texts[edge]));
@@ -334,6 +336,11 @@ public:
           Node = checkNode;
           edge = *end - activeLen;
           checkNode = Node.Next(texts[edge]);
+        }
+
+        if (Node.IsPrevNotNull() && Node.GetActiveNode() != root) {
+          Node.GetPrevNode()->url = Node.GetActiveNode();
+          Node.SetPrevNull();
         }
 
         if (activeLen <= 0 && !Node.FindPath(texts[*end])) {
@@ -356,14 +363,13 @@ public:
                  texts[*end] != texts[Node.Next(texts[edge])->begin + activeLen]) {
           splitFlag = true;
           TIterator tmp(Node.Next(texts[edge]));
-          tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen);
-//          --remainder;
 
+          tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen, Node.GetActiveNode());
           if (Node.IsPrevNotNull()) {
             Node.GetPrevNode()->url = tmp.GetActiveNode();
             Node.SetPrevNull();
           }
-
+//          --remainder;
           if (Node.GetActiveNode() == root) {
             tmp.GoThrowURL();
             Node = tmp;
