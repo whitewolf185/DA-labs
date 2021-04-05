@@ -32,6 +32,7 @@ private:
     std::shared_ptr<int> last;
     bool leaf = true;
     std::shared_ptr<TBorNode> url;
+    std::shared_ptr<TBorNode> prev;
     std::unordered_map<char, std::shared_ptr<TBorNode>> next;
     int id;
     bool red = false;
@@ -109,6 +110,7 @@ protected:
       }
     }
     node->url = nullptr;
+    node->prev = nullptr;
   }
 
 //----functions
@@ -117,6 +119,7 @@ public:
     end = std::make_shared<int>(0);
     root = std::make_shared<TBorNode>(root, globID, -1, end);
     root->url = root;
+    root->prev = nullptr;
   };
 
   ~TBoris() {
@@ -131,18 +134,18 @@ public:
 //--------------------------------ITERATOR-------------------------------
   class TIterator {
   private:
-    std::shared_ptr<TBorNode> prevNode;
+    std::shared_ptr<TBorNode> urlNode;
     std::shared_ptr<TBorNode> activeNode;
 
   public:
     TIterator() {
       activeNode = nullptr;
-      prevNode = nullptr;
+      urlNode = nullptr;
     }
 
     explicit TIterator(const std::shared_ptr<TBorNode> &node) {
       activeNode = node;
-      prevNode = nullptr;
+      urlNode = nullptr;
     }
 
     ~TIterator() = default;
@@ -158,6 +161,13 @@ public:
         return tmp;
       }
       return nullptr;
+    }
+
+    std::shared_ptr<TBorNode> Prev() {
+      if (activeNode->prev == nullptr) {
+        return nullptr;
+      }
+      return activeNode->prev;;
     }
 
     bool FindPath(const char &c) {
@@ -177,12 +187,13 @@ public:
       if (activeNode->url == nullptr) {
         throw std::logic_error("Trying to call nullptr in URL");
       }
-      prevNode = activeNode;
+      urlNode = activeNode;
       activeNode = activeNode->url;
     }
 
     void Insert(const std::pair<char, std::shared_ptr<TBorNode>> &tmp_pair) {
       activeNode->Insert(tmp_pair);
+      activeNode->GetNodeElem(tmp_pair.first)->prev = activeNode;
     }
 
     //Ф нужна для того, чтобы разделить ноду на 2. С _ идут аргументы обязательные для создания новой ноды.
@@ -205,6 +216,8 @@ public:
       activeNode->begin = splitter;
       tmp->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[activeNode->begin],
                                                              activeNode));
+
+      tmp->prev = Node;
     }
 
     TIterator &operator=(const std::shared_ptr<TBorNode> &rhs) {
@@ -215,7 +228,7 @@ public:
     }
 
     TIterator &operator=(const TIterator &rhs) {
-      prevNode = rhs.prevNode;
+      urlNode = rhs.urlNode;
       return *this;
     }
 
@@ -229,7 +242,7 @@ public:
     }
 
     std::shared_ptr<TBorNode> GetPrevNode() const {
-      return prevNode;
+      return urlNode;
     }
 
     char GetSymbol(const std::string &_texts, const int &edge, const int &activeLen) const {
@@ -242,18 +255,18 @@ public:
 
     //Геттер нужен для того, чтобы вернуть ноль, если prevNode пустой. Иначе вернуть сам этот prevNode.
     bool IsPrevNotNull() {
-      if (prevNode == nullptr) {
+      if (urlNode == nullptr) {
         return false;
       }
       return true;
     }
 
     void SetPrevNull() {
-      prevNode = nullptr;
+      urlNode = nullptr;
     }
 
     void SetPrev(const std::shared_ptr<TBorNode> &node) {
-      prevNode = node;
+      urlNode = node;
     }
 
     void ColorBlue() {
@@ -304,29 +317,15 @@ public:
     return root;
   }
 
-  int &GetID() {
-    return globID;
-  }
-
-  std::string GetTexts() const {
-    return texts;
-  }
-
-  std::shared_ptr<int> GetEnd() const {
-    return end;
-  }
-
 
   void Build() {
     int activeLen = 0;
     int edge = 0;
     TIterator Node(root);
     bool splitFlag = true;
-
 #ifdef DEBUG
     int i;
 #endif
-
     for (*end = 0; *end < texts.size(); ++*end) {
 #ifdef DEBUG
       i = *end;
@@ -355,6 +354,14 @@ public:
             Node.GetPrevNode()->url = Node.GetActiveNode();
             Node.SetPrevNull();
           }
+
+          if (Node.GetActiveNode()->url == root) {
+            while (Node.Prev() != nullptr && Node.GetActiveNode()->url == root) {
+              activeLen = activeLen + *Node.GetActiveNode()->last - Node.GetActiveNode()->begin;
+              Node = Node.Prev();
+            }
+          }
+
           Node.GoThrowURL();
           Node.SetPrevNull();
           edge = 0;
@@ -381,6 +388,14 @@ public:
             --activeLen;
           }
           else {
+
+            if (Node.GetActiveNode()->url == root) {
+              while (Node.Prev() != nullptr && Node.GetActiveNode()->url == root) {
+                activeLen = activeLen + *Node.GetActiveNode()->last - Node.GetActiveNode()->begin;
+                Node = Node.Prev();
+              }
+            }
+
             Node.GoThrowURL();
             Node.SetPrev(tmp.GetActiveNode());
           }
