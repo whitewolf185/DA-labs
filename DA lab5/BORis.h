@@ -23,7 +23,6 @@ private:
   std::string texts;
   int globID = -1;
   int one2two = -1;
-  int wroomWroom = -1;
 
 
   //-----------------------simply nodes---------------------
@@ -291,6 +290,10 @@ public:
       activeNode->PrintNode(_texts);
       std::cout << std::endl;
     }
+
+    [[maybe_unused]] void PrintNode_1(const std::string &_texts) {
+      activeNode->PrintNode(_texts);
+    }
 #endif
 
   };
@@ -338,7 +341,7 @@ public:
           checkNode = Node.Next(texts[edge]);
         }
 
-        if (Node.IsPrevNotNull() && Node.GetActiveNode() != root) {
+        if (Node.IsPrevNotNull() && activeLen == 0) {
           Node.GetPrevNode()->url = Node.GetActiveNode();
           Node.SetPrevNull();
         }
@@ -362,17 +365,18 @@ public:
                  activeLen > 0 &&
                  texts[*end] != texts[Node.Next(texts[edge])->begin + activeLen]) {
           splitFlag = true;
+          {
+            TIterator tmp(Node.Next(texts[edge]));
+            tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen, Node.GetActiveNode());
+          }
           TIterator tmp(Node.Next(texts[edge]));
-
-          tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen, Node.GetActiveNode());
           if (Node.IsPrevNotNull()) {
             Node.GetPrevNode()->url = tmp.GetActiveNode();
             Node.SetPrevNull();
           }
 //          --remainder;
           if (Node.GetActiveNode() == root) {
-            tmp.GoThrowURL();
-            Node = tmp;
+            Node.SetPrev(tmp.GetActiveNode());
             ++edge;
             --activeLen;
           }
@@ -406,9 +410,9 @@ public:
   }
 
 private:
-  void ColorizeHelp(TIterator &node, std::set<std::string> &ans, int &ansCount) {
+  void ColorizeHelp(TIterator &node, std::set<std::string> &ans, int &ansCount, int len) {
+    len = len + (*node.GetActiveNode()->last - node.GetActiveNode()->begin) + 1;
     if (node.GetActiveNode()->leaf) {
-      wroomWroom = node.GetActiveNode()->id;
       if (node.GetActiveNode()->begin <= one2two) {
         node.ColorRed();
         return;
@@ -419,9 +423,7 @@ private:
 
     for (const auto &item : node.GetActiveNode()->next) {
       TIterator nextNode(item.second);
-      ColorizeHelp(nextNode, ans, ansCount);
-
-      if (node.BothColored()) { break; }
+      ColorizeHelp(nextNode, ans, ansCount, len);
 
       if (nextNode.GetBlue()) {
         node.ColorBlue();
@@ -432,14 +434,13 @@ private:
     }
 
     if (node.BothColored()) {
-      if (*node.GetActiveNode()->last - wroomWroom + 1 > ansCount) {
-//        std::cout << node.GetActiveNode() << std::endl;
+      if (len > ansCount) {
         ans.clear();
-        ansCount = *node.GetActiveNode()->last - wroomWroom + 1;
-        ans.insert(node.GetString(texts, wroomWroom, *node.GetActiveNode()->last));
+        ansCount = len;
+        ans.insert(node.GetString(texts, *node.GetActiveNode()->last - len + 1, *node.GetActiveNode()->last));
       }
-      else if (*node.GetActiveNode()->last - wroomWroom + 1 == ansCount) {
-        ans.insert(node.GetString(texts, wroomWroom, *node.GetActiveNode()->last));
+      else if (len == ansCount) {
+        ans.insert(node.GetString(texts, *node.GetActiveNode()->last - len + 1, *node.GetActiveNode()->last));
       }
     }
   }
@@ -451,7 +452,7 @@ public:
     TIterator node(root);
     for (const auto &item : node.GetActiveNode()->next) {
       TIterator nextNode(item.second);
-      ColorizeHelp(nextNode, ans, ansCount);
+      ColorizeHelp(nextNode, ans, ansCount, 0);
     }
 
     std::cout << ansCount << std::endl;
@@ -489,8 +490,4 @@ public:
 
 
 };
-//TODO ѕоиск выполн€тс€ через DFS.
-//TODO ѕри поиске нужно будет определить на какой позиции находитс€ 1-ый сентинел, чтобы потом, дойд€ до листа,
-// можно было вы€снить к какому слову относитс€ данный суффикс.
-
 #endif //SUFF_TREE_LAB5_MAIN_H
