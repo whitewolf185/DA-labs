@@ -90,12 +90,12 @@ private:
       return nullptr;
     }
 
-    void Copy(const std::shared_ptr<TBorNode> &cmp) {
-      last = cmp->last;
-      leaf = cmp->leaf;
-      next = cmp->next;
-      id = cmp->id;
-      url = cmp->url;
+    std::string GetString(const std::string &_texts, const int &_begin, const int &_end) {
+      std::string result;
+      for (int i = _begin; i <= _end; ++i) {
+        result += _texts[i];
+      }
+      return result;
     }
 
   };
@@ -289,14 +289,6 @@ public:
       return activeNode->blue;
     }
 
-    std::string GetString(const std::string &_texts, const int &_begin, const int &_end) {
-      std::string result;
-      for (int i = _begin; i <= _end; ++i) {
-        result += _texts[i];
-      }
-      return result;
-    }
-
     //отладочная функция
 #ifdef DEBUG
     [[maybe_unused]] void PrintNode(const std::string &_texts) {
@@ -425,37 +417,36 @@ public:
   }
 
 private:
-  void ColorizeHelp(TIterator &node, std::set<std::string> &ans, int &ansCount, int len) {
-    len = len + (*node.GetActiveNode()->last - node.GetActiveNode()->begin) + 1;
-    if (node.GetActiveNode()->leaf) {
-      if (node.GetActiveNode()->begin <= one2two) {
-        node.ColorRed();
+  void ColorizeHelp(const std::shared_ptr<TBorNode> &node, std::set<std::string> &ans, int &ansCount, int len) {
+    len = len + (*node->last - node->begin) + 1;
+    if (node->leaf) {
+      if (node->begin <= one2two) {
+        node->red = true;
         return;
       }
-      node.ColorBlue();
+      node->blue = true;
       return;
     }
 
-    for (const auto &item : node.GetActiveNode()->next) {
-      TIterator nextNode(item.second);
-      ColorizeHelp(nextNode, ans, ansCount, len);
+    for (const auto &item : node->next) {
+      ColorizeHelp(item.second, ans, ansCount, len);
 
-      if (nextNode.GetBlue()) {
-        node.ColorBlue();
+      if (item.second->blue) {
+        node->blue = true;
       }
-      if (nextNode.GetRed()) {
-        node.ColorRed();
+      if (item.second->red) {
+        node->red = true;
       }
     }
 
-    if (node.BothColored()) {
+    if (node->blue && node->red) {
       if (len > ansCount) {
         ans.clear();
         ansCount = len;
-        ans.insert(node.GetString(texts, *node.GetActiveNode()->last - len + 1, *node.GetActiveNode()->last));
+        ans.insert(node->GetString(texts, *node->last - len + 1, *node->last));
       }
       else if (len == ansCount) {
-        ans.insert(node.GetString(texts, *node.GetActiveNode()->last - len + 1, *node.GetActiveNode()->last));
+        ans.insert(node->GetString(texts, *node->last - len + 1, *node->last));
       }
     }
   }
@@ -466,8 +457,7 @@ public:
     int ansCount = 0;
     TIterator node(root);
     for (const auto &item : node.GetActiveNode()->next) {
-      TIterator nextNode(item.second);
-      ColorizeHelp(nextNode, ans, ansCount, 0);
+      ColorizeHelp(item.second, ans, ansCount, 0);
     }
 
     std::cout << ansCount << std::endl;
