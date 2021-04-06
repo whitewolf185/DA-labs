@@ -35,8 +35,14 @@ int main() {
 #endif
 
 #ifndef TRY_BOR
+  int* a = new int (1234);
+  int* b = a;
+  std::cout << "a = " << *a << std::endl;
+  std::cout << "b = " << *b << '\n' << std::endl;
 
-  std::cout << ' ' * 4;
+  b = nullptr;
+  std::cout << "a = " << *a << std::endl;
+  delete a;
 #endif
 
   return 0;

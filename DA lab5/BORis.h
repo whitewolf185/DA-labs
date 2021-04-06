@@ -31,8 +31,8 @@ private:
     int begin;
     std::shared_ptr<int> last;
     bool leaf = true;
-    std::shared_ptr<TBorNode> url;
-    std::unordered_map<char, std::shared_ptr<TBorNode>> next;
+    TBorNode* url;
+    std::unordered_map<char, TBorNode*> next;
     int id;
     bool red = false;
     bool blue = false;
@@ -40,7 +40,7 @@ private:
     //constructors
     //Конструктор. Первые 2 аргумента всегда должны быть одни и те же. Последние 2 - начало и общий конец.
     //По умолчанию все новые ноды создаются со ссылкой на root.
-    TBorNode(const std::shared_ptr<TBorNode> &root, int &globID, const int &_begin,
+    TBorNode(TBorNode* root, int &globID, const int &_begin,
              const std::shared_ptr<int> &end) {
       id = globID++;
       last = end;
@@ -49,7 +49,7 @@ private:
     }
 
     //Конструктор с задаваемой в конце end-ом, как число. Нужен для вставки ноды не как лист.
-    TBorNode(const std::shared_ptr<TBorNode> &root, int &globID, const int &_begin, const int &end) {
+    TBorNode(TBorNode* root, int &globID, const int &_begin, const int &end) {
       id = globID++;
       last.reset(new int(end));
       begin = _begin;
@@ -60,7 +60,12 @@ private:
     TBorNode() = delete;
 
     //destructors
-    ~TBorNode() = default;
+    ~TBorNode(){
+      url = nullptr;
+      for (auto item : next){
+        delete item.second;
+      }
+    };
 
     //functions
     //Ф нужна для вывода данных в ноде. Нужна больше для отладки
@@ -72,14 +77,14 @@ private:
 
     //Нужна для вставки следующего элемента. В аргументах пара,
     // в которой должно содержаться первая буква и указатель со вставляемой нодой.
-    void Insert(const std::pair<char, std::shared_ptr<TBorNode>> &tmp_pair) {
+    void Insert(const std::pair<char, TBorNode*> &tmp_pair) {
       next.insert(tmp_pair);
       leaf = false;
     }
 
     //Ф получает ноду по символу. Нужно, чтобы доставать нужную ноду на развилке.
     // Обычно используется в Ф Next
-    std::shared_ptr<TBorNode> GetNodeElem(const char &c) {
+    TBorNode* GetNodeElem(const char &c) {
       if (!next.empty()) {
         if (next.find(c) == next.end()) {
           return nullptr;
@@ -89,38 +94,21 @@ private:
       return nullptr;
     }
 
-    void Copy(const std::shared_ptr<TBorNode> &cmp) {
-      last = cmp->last;
-      leaf = cmp->leaf;
-      next = cmp->next;
-      id = cmp->id;
-      url = cmp->url;
-    }
-
   };
 
 protected:
-  std::shared_ptr<TBorNode> root;
-
-  void Deleter(std::shared_ptr<TBorNode> &node) {
-    if (!node->leaf) {
-      for (auto &item : node->next) {
-        Deleter(item.second);
-      }
-    }
-    node->url = nullptr;
-  }
+  TBorNode* root;
 
 //----functions
 public:
   TBoris() {
     end = std::make_shared<int>(0);
-    root = std::make_shared<TBorNode>(root, globID, -1, end);
+    root = new TBorNode (root, globID, -1, end);
     root->url = root;
   };
 
   ~TBoris() {
-    Deleter(root);
+    delete root;
   };
 
   void SetText(const std::string &str1, const std::string &str2) {
@@ -131,8 +119,8 @@ public:
 //--------------------------------ITERATOR-------------------------------
   class TIterator {
   private:
-    std::shared_ptr<TBorNode> prevNode;
-    std::shared_ptr<TBorNode> activeNode;
+    TBorNode* prevNode;
+    TBorNode* activeNode;
 
   public:
     TIterator() {
@@ -140,15 +128,18 @@ public:
       prevNode = nullptr;
     }
 
-    explicit TIterator(const std::shared_ptr<TBorNode> &node) {
+    explicit TIterator(TBorNode* node) {
       activeNode = node;
       prevNode = nullptr;
     }
 
-    ~TIterator() = default;
+    ~TIterator() {
+      activeNode = nullptr;
+      prevNode = nullptr;
+    };
 
     //Ф перехода на следующую ноду
-    std::shared_ptr<TBorNode> Next(const char &c) {
+    TBorNode* Next(const char &c) {
       if (activeNode == nullptr) {
         return nullptr;
       }
@@ -181,54 +172,45 @@ public:
       activeNode = activeNode->url;
     }
 
-    void Insert(const std::pair<char, std::shared_ptr<TBorNode>> &tmp_pair) {
+    void Insert(const std::pair<char, TBorNode*> &tmp_pair) {
       activeNode->Insert(tmp_pair);
     }
 
     //Ф нужна для того, чтобы разделить ноду на 2. С _ идут аргументы обязательные для создания новой ноды.
     //Потом идут begin - индекс символа нового элемента, splitter - индекс символа сплитуемого элемента.
-    void Split(const std::shared_ptr<TBorNode> &_root, int &_globID, const std::string &_texts,
+    void Split(TBorNode* _root, int &_globID, const std::string &_texts,
                const std::shared_ptr<int> &_end,
-               const int &begin, const int &splitter, std::shared_ptr<TBorNode> Node) {
+               const int &begin, const int &splitter, TBorNode* Node) {
       Node->next.erase(_texts[activeNode->begin]);
-      Node->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[activeNode->begin],
-                                                              std::make_shared<TBorNode>(_root, _globID,
+      Node->Insert(std::pair<char, TBorNode*>(_texts[activeNode->begin],
+                                                              new TBorNode (_root, _globID,
                                                                                          activeNode->begin,
                                                                                          splitter - 1)));
-      std::shared_ptr<TBorNode> tmp = Node->GetNodeElem(_texts[activeNode->begin]);
+      TBorNode* tmp = Node->GetNodeElem(_texts[activeNode->begin]);
       --_globID;
       //новый элемент
-      tmp->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[begin],
-                                                             std::make_shared<TBorNode>(_root, _globID, begin,
+      tmp->Insert(std::pair<char, TBorNode*>(_texts[begin],
+                                                             new TBorNode(_root, _globID, begin,
                                                                                         _end)));
       //Старый элемент
       activeNode->begin = splitter;
-      tmp->Insert(std::pair<char, std::shared_ptr<TBorNode>>(_texts[activeNode->begin],
+      tmp->Insert(std::pair<char, TBorNode*>(_texts[activeNode->begin],
                                                              activeNode));
     }
 
-    TIterator &operator=(const std::shared_ptr<TBorNode> &rhs) {
+    TIterator &operator=(TBorNode* rhs) {
       if (rhs != nullptr) {
         activeNode = rhs;
       }
       return *this;
     }
 
-    TIterator &operator=(const TIterator &rhs) {
-      prevNode = rhs.prevNode;
-      return *this;
-    }
-
     //getters and setters
-    std::shared_ptr<TBorNode> GetActiveNode() const {
+    TBorNode* GetActiveNode() const {
       return activeNode;
     }
 
-    int GetBegin() const {
-      return activeNode->begin;
-    }
-
-    std::shared_ptr<TBorNode> GetPrevNode() const {
+    TBorNode* GetPrevNode() const {
       return prevNode;
     }
 
@@ -252,7 +234,7 @@ public:
       prevNode = nullptr;
     }
 
-    void SetPrev(const std::shared_ptr<TBorNode> &node) {
+    void SetPrev(TBorNode* node) {
       prevNode = node;
     }
 
@@ -299,24 +281,6 @@ public:
   };
 //--------------------------END OF ITERATOR--------------------------
 
-//getters
-  std::shared_ptr<TBorNode> GetRoot() const {
-    return root;
-  }
-
-  int &GetID() {
-    return globID;
-  }
-
-  std::string GetTexts() const {
-    return texts;
-  }
-
-  std::shared_ptr<int> GetEnd() const {
-    return end;
-  }
-
-
   void Build() {
     int activeLen = 0;
     int edge = 0;
@@ -333,7 +297,7 @@ public:
 #endif
       Node.SetPrevNull();
       while (globID <= *end) {
-        std::shared_ptr<TBorNode> checkNode = (Node.Next(texts[edge]));
+        TBorNode* checkNode = (Node.Next(texts[edge]));
         while (checkNode != nullptr && activeLen > *checkNode->last - checkNode->begin) {
           activeLen = activeLen - 1 - (*checkNode->last - checkNode->begin);
           Node = checkNode;
@@ -349,8 +313,8 @@ public:
         if (activeLen <= 0 && !Node.FindPath(texts[*end])) {
           splitFlag = true;
 //          --remainder;
-          Node.Insert(std::pair<char, std::shared_ptr<TBorNode>>(texts[*end],
-                                                                 std::make_shared<TBorNode>(root, globID, *end, end)));
+          Node.Insert(std::pair<char, TBorNode*>(texts[*end],
+                                                                 new TBorNode(root, globID, *end, end)));
           if (Node.IsPrevNotNull()) {
             Node.GetPrevNode()->url = Node.GetActiveNode();
             Node.SetPrevNull();
@@ -369,20 +333,22 @@ public:
             TIterator tmp(Node.Next(texts[edge]));
             tmp.Split(root, globID, texts, end, *end, Node.Next(texts[edge])->begin + activeLen, Node.GetActiveNode());
           }
-          TIterator tmp(Node.Next(texts[edge]));
-          if (Node.IsPrevNotNull()) {
-            Node.GetPrevNode()->url = tmp.GetActiveNode();
-            Node.SetPrevNull();
-          }
+          {
+            TIterator tmp(Node.Next(texts[edge]));
+            if (Node.IsPrevNotNull()) {
+              Node.GetPrevNode()->url = tmp.GetActiveNode();
+              Node.SetPrevNull();
+            }
 //          --remainder;
-          if (Node.GetActiveNode() == root) {
-            Node.SetPrev(tmp.GetActiveNode());
-            ++edge;
-            --activeLen;
-          }
-          else {
-            Node.GoThrowURL();
-            Node.SetPrev(tmp.GetActiveNode());
+            if (Node.GetActiveNode() == root) {
+              Node.SetPrev(tmp.GetActiveNode());
+              ++edge;
+              --activeLen;
+            }
+            else {
+              Node.GoThrowURL();
+              Node.SetPrev(tmp.GetActiveNode());
+            }
           }
         }
 
@@ -392,18 +358,8 @@ public:
             edge = *end;
           }
           ++activeLen;
-#ifdef DEBUG
-          TIterator iter(root);
-          PrintTree(iter, 0);
-          std::cout << "-------------" << i << std::endl;
-#endif
           break;
         }
-#ifdef DEBUG
-        TIterator iter(root);
-        PrintTree(iter, 0);
-        std::cout << "-------------" << i << std::endl;
-#endif
       }
     }
     --*end;
