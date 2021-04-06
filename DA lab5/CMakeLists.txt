@@ -7,3 +7,4 @@ set(CMAKE_CXX_FLAGS "-g")
 
 add_executable(start BORis.h main.cpp)
 add_executable(itog test.cpp)
+add_executable(bench benchmark.cpp)

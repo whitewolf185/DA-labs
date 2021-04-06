@@ -265,19 +265,6 @@ public:
       }
       return result;
     }
-
-    //отладочная функция
-#ifdef DEBUG
-    [[maybe_unused]] void PrintNode(const std::string &_texts) {
-      activeNode->PrintNode(_texts);
-      std::cout << std::endl;
-    }
-
-    [[maybe_unused]] void PrintNode_1(const std::string &_texts) {
-      activeNode->PrintNode(_texts);
-    }
-#endif
-
   };
 //--------------------------END OF ITERATOR--------------------------
 

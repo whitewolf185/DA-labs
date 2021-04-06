@@ -12,4 +12,5 @@ cmake-*/
 /httpRequests/
 /cmake-mingw/
 /venv/
-/DA lab6/report/
+report/
+/benchJS/
