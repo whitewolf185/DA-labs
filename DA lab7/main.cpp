@@ -76,11 +76,8 @@ int main() {
     sMax = std::max(sMax, s_iMax);
   }
 
-  int64_t end = clock();
-  int64_t time = end - start;
-  std::cout << "My prog time " << time / 1000 << '.' << time % 1000 << " ms\n";
 
-//  std::cout << sMax << std::endl;
+  std::cout << sMax << std::endl;
 
   return 0;
 }
