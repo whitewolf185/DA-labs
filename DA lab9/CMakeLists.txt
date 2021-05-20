@@ -5,3 +5,4 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-g")
 
 add_executable(main main.cpp)
+add_executable(bench benchmark.cpp)

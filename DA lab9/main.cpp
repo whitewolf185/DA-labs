@@ -3,7 +3,7 @@
 #include <vector>
 
 
-const long long INF = 9999999999;
+const long long INF = 92233720368547758;
 
 struct TEdge {
   long long to;
